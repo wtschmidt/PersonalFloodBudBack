@@ -1,32 +1,44 @@
 const express = require('express');
 const axios = require('axios');
+const bodyParser = require('body-parser');
+const path = require('path');
 
 const PORT = process.env.PORT || 8080;
-const bodyParser = require('body-parser');
-const cors = require('cors');
-//the corsOptions below is copied from a website but I'm not totally sure how this works yet.
-//this example is just so I can test if the server is actually up and running correctly.
-var corsOptions = {
-  origin: 'http://example.com',
-  optionsSuccessStatus: 200
-};
+
 
 const app = express();
 
-app.use(cors(corsOptions))
+app.use(bodyParser.json());
 
-app.use(bodyParser.json())
 
-app.get('/api/route', (req, res) => {
+const angularStaticDir = path.join(__dirname, '../../flood/dist/flood');
+
+app.use(express.static(angularStaticDir));
+// app.use('/static', express.static(path.join(__dirname, '../../flood/dist')));
+// app.use('api/', express.static(path.join(__dirname, '../../flood/dist')));
+
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
+
+// app.use(express.static('../../flood/dist'));
+// app.get('/api/*', (req, res) => {
+//   res.sendFile(path.join(__dirname, '../../flood/dist'));
+// });
+
+app.get('/route', (req, res) => {
   axios.get('https://api.openbrewerydb.org/breweries')
-    .then(breweries => {
-      res.status(201).send(breweries)
+    .then((breweries) => {
+      // console.log(breweries);
+      res.status(201).send(breweries.data);
     })
-    .catch(err => {
+    .catch((err) => {
       console.log(err);
       res.send(500);
-    })
-})
+    });
+});
 
 app.listen(PORT, () => {
   console.log('Floodbuddies be listening on: 8080');
