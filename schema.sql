@@ -18,7 +18,7 @@ CREATE TABLE reports (
   location varchar(255),
   img varchar(255),
   description varchar(255),
-  location varchar(255),
+  report_location varchar(255),
   elevation varchar(255),
   user_id INTEGER REFERENCES users (id)
 );
@@ -39,7 +39,7 @@ CREATE TABLE rainGauge(
 
 CREATE TABLE rainGaugeReports(
   id SERIAL PRIMARY KEY,
-  location varchar(255),
+  gauge_location varchar(255),
   time varchar(25),
   gauge_id INTEGER REFERENCES rainGauge (id)
 );
