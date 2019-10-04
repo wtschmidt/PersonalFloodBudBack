@@ -27,6 +27,10 @@ app.get('/route', (req, res) => {
     });
 });
 
+app.get('/rainfall', (req, res) => {
+  axios.get(`http://dataservice.accuweather.com/currentconditions/v1/348585?apikey=${ACCUWEATHER_APIKEY}`);
+})
+
 app.get('/addUser', (req, res) => {
   insertUser()
     .then((results) => {
