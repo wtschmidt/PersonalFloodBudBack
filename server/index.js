@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const bodyParser = require('body-parser');
 const path = require('path');
+require('dotenv').config();
 
 const PORT = process.env.PORT || 8080;
 
@@ -10,8 +11,11 @@ const app = express();
 
 app.use(bodyParser.json());
 
+const {
+  distRoute,
+} = process.env;
 
-const angularStaticDir = path.join(__dirname, '../../flood/dist/flood');
+const angularStaticDir = path.join(__dirname, distRoute);
 
 app.use(express.static(angularStaticDir));
 // app.use('/static', express.static(path.join(__dirname, '../../flood/dist')));
