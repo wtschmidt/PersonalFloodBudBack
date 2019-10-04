@@ -3,6 +3,7 @@ const axios = require('axios');
 const bodyParser = require('body-parser');
 const path = require('path');
 const { insertUser } = require('../database/dbindex');
+const { getRainfall } = require('./APIhelpers');
 
 const PORT = process.env.PORT || 8080;
 
@@ -24,6 +25,17 @@ app.get('/route', (req, res) => {
     .catch((err) => {
       console.log(err);
       res.send(500);
+    });
+});
+
+app.get('/rainfall', (req, res) => {
+  return getRainfall()
+    .then((rainTotal) => {
+      res.json(rainTotal);
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500);
     });
 });
 
