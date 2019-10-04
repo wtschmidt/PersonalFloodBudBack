@@ -3,7 +3,7 @@ const axios = require('axios');
 const bodyParser = require('body-parser');
 const path = require('path');
 const { insertUser } = require('../database/dbindex');
-const dotenv = require('dotenv').config();
+const { getRainfall } = require('./APIhelpers');
 
 const PORT = process.env.PORT || 8080;
 
@@ -29,7 +29,14 @@ app.get('/route', (req, res) => {
 });
 
 app.get('/rainfall', (req, res) => {
-  axios.get(`http://dataservice.accuweather.com/currentconditions/v1/348585?apikey=${ACCUWEATHER_APIKEY}`);
+  return getRainfall()
+    .then((rainTotal) => {
+      res.json(rainTotal);
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500);
+    });
 });
 
 app.get('/addUser', (req, res) => {
