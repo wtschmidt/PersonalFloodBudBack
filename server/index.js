@@ -17,6 +17,8 @@ const angularStaticDir = path.join(__dirname, '../../flood/dist/flood');
 
 app.use(express.static(angularStaticDir));
 
+let reportData;
+
 app.get('/route', (req, res) => {
   axios.get('https://api.openbrewerydb.org/breweries')
     .then((breweries) => {
@@ -36,8 +38,6 @@ app.get('/rainfall', (req, res) => getRainfall()
     console.log(err);
     res.status(500);
   }));
-
-let reportData;
 
 app.post('/submitReport', (req, res) => {
   createAddress(req.body.report.latLng)
