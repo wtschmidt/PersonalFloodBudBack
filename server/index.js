@@ -2,8 +2,8 @@ const express = require('express');
 const axios = require('axios');
 const bodyParser = require('body-parser');
 const path = require('path');
-const { insertUser } = require('../database/dbindex');
-const { getRainfall } = require('./APIhelpers');
+const { insertUser, createReport } = require('../database/dbindex');
+const { getRainfall, createAddress } = require('./APIhelpers');
 
 const PORT = process.env.PORT || 8080;
 
@@ -17,6 +17,8 @@ const angularStaticDir = path.join(__dirname, '../../flood/dist/flood');
 
 app.use(express.static(angularStaticDir));
 
+let reportData;
+
 app.get('/route', (req, res) => {
   axios.get('https://api.openbrewerydb.org/breweries')
     .then((breweries) => {
@@ -28,14 +30,34 @@ app.get('/route', (req, res) => {
     });
 });
 
-app.get('/rainfall', (req, res) => {
-  return getRainfall()
-    .then((rainTotal) => {
-      res.json(rainTotal);
+app.get('/rainfall', (req, res) => getRainfall()
+  .then((rainTotal) => {
+    res.json(rainTotal);
+  })
+  .catch((err) => {
+    console.log(err);
+    res.status(500);
+  }));
+
+app.post('/submitReport', (req, res) => {
+  createAddress(req.body.report.latLng)
+    .then((returnedAddress) => {
+      reportData = {
+        desc: req.body.report.desc,
+        latLng: req.body.report.latLng,
+        img: req.body.report.img || null,
+        physicalAddress: returnedAddress,
+      };
     })
-    .catch((err) => {
-      console.log(err);
-      res.status(500);
+    .then(() => {
+      createReport(reportData);
+    })
+    .then(() => {
+      res.status(201).send('got ya report...Allen')
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(504).send('something went wrong with your report');
     });
 });
 
