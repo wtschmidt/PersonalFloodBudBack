@@ -53,7 +53,7 @@ app.post('/submitReport', (req, res) => {
       createReport(reportData);
     })
     .then(() => {
-      res.status(201).send('got ya report...Allen')
+      res.status(201).send('got ya report...Allen');
     })
     .catch((error) => {
       console.log(error);
