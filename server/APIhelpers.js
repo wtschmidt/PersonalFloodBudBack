@@ -10,10 +10,7 @@ const createAddress = (coord) =>
   // need to take latLng coord and convert to physical address in words through API call to
   // google geoCode.
   axios.get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${coord}&key=${GOOGLE_APIKEY}`)
-    .then((physicalAddress) => {
-      console.log(physicalAddress.data.results[0].formatted_address);
-      return physicalAddress.data.results[0].formatted_address;
-    });
+    .then((physicalAddress) => physicalAddress.data.results[0].formatted_address);
 
 module.exports = {
   getRainfall,
