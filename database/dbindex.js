@@ -43,21 +43,6 @@ const createReport = ((reportInfo) => {
     .catch((error) => console.log(error));
 });
 
-// const text = 'INSERT INTO users(name, email) VALUES($1, $2) RETURNING *'
-// const values = ['brianc', 'brian.m.carlson@gmail.com']
-
-// // promise
-// client
-//   .query(text, values)
-//   .then(res => {
-//     console.log(res.rows[0])
-//     // { name: 'brianc', email: 'brian.m.carlson@gmail.com' }
-//   })
-//   .catch(e => console.error(e.stack))
-
-
-
-
 
 module.exports = {
   insertUser,
