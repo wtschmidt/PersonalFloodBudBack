@@ -35,9 +35,33 @@ const insertUser = () => new Promise((resolve, reject) => {
   });
 });
 
+const createReport = ((reportInfo) => {
+  const values = [reportInfo.latLng, reportInfo.img, reportInfo.desc, reportInfo.physicalAddress];
+  const text = 'INSERT INTO reports(latLng, img, description, physical_address) VALUES($1, $2, $3, $4)';
+  pool.query(text, values)
+    .then((res) => console.log(res))
+    .catch((error) => console.log(error));
+});
+
+// const text = 'INSERT INTO users(name, email) VALUES($1, $2) RETURNING *'
+// const values = ['brianc', 'brian.m.carlson@gmail.com']
+
+// // promise
+// client
+//   .query(text, values)
+//   .then(res => {
+//     console.log(res.rows[0])
+//     // { name: 'brianc', email: 'brian.m.carlson@gmail.com' }
+//   })
+//   .catch(e => console.error(e.stack))
+
+
+
+
 
 module.exports = {
   insertUser,
+  createReport,
 };
 
 //ALL THIS CRAP IS CARIN'S NOTES, WHICH SHE WILL DELETE LATER. PLEASE DON"T DELETE RIGHT NOW.
