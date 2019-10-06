@@ -43,10 +43,18 @@ const createReport = ((reportInfo) => {
     .catch((error) => console.log(error));
 });
 
+const getReports = (() => {
+  const text = 'SELECT (latLng, img, description, physical_address) FROM reports)';
+  pool.query(text)
+    .then((reports) => {
+      console.log(reports);
+    });
+});
 
 module.exports = {
   insertUser,
   createReport,
+  getReports,
 };
 
 //ALL THIS CRAP IS CARIN'S NOTES, WHICH SHE WILL DELETE LATER. PLEASE DON"T DELETE RIGHT NOW.
