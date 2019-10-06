@@ -48,6 +48,7 @@ const getReports = (() => {
   pool.query(text)
     .then((reports) => {
       console.log(reports);
+      return reports;
     });
 });
 
