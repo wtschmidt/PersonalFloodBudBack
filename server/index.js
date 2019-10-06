@@ -77,7 +77,8 @@ app.get('/addUser', (req, res) => {
 // This fn gets all flood reports from db, and returns them to the user.
 app.get('/floodReports', (req, res) => {
   getReports()
-    .then((reports) => res.json(reports));
+    .then((reports) => res.json(reports))
+    .catch((error) => console.log(error));
 });
 
 app.listen(PORT, () => {
