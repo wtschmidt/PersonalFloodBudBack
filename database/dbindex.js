@@ -44,11 +44,13 @@ const createReport = ((reportInfo) => {
 });
 
 const getReports = (() => {
-  const text = 'SELECT (latLng, img, description, physical_address) FROM reports)';
-  pool.query(text)
+  // const text = 'SELECT latLng, img, description, physical_address FROM reports';
+  pool.query('SELECT latLng, img, description, physical_address FROM reports')
     .then((reports) => {
       console.log(reports);
-      return reports;
+    })
+    .catch((error) => {
+      console.log(error);
     });
 });
 
