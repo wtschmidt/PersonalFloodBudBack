@@ -2,7 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const bodyParser = require('body-parser');
 const path = require('path');
-const { insertUser, createReport } = require('../database/dbindex');
+const { insertUser, createReport, getReports } = require('../database/dbindex');
 const { getRainfall, createAddress } = require('./APIhelpers');
 
 const PORT = process.env.PORT || 8080;
