@@ -27,7 +27,7 @@ pool.connect();
 
 
 const insertUser = () => new Promise((resolve, reject) => {
-  pool.query(`INSERT INTO users(firstName, lastName, email) VALUES('dan', 'dan', 1)`, (error, results) => {
+  pool.query(`INSERT INTO users(firstName, lastName, email) VALUES('westo', 'pesto', 'wes@was.com)`, (error, results) => {
     if (error) {
       console.log(error);
       return reject(error);
@@ -37,10 +37,41 @@ const insertUser = () => new Promise((resolve, reject) => {
   });
 });
 
+const createReport = ((reportInfo) => {
+  const values = [reportInfo.latLng, reportInfo.img, reportInfo.desc, reportInfo.physicalAddress];
+  const text = 'INSERT INTO reports(latLng, img, description, physical_address) VALUES($1, $2, $3, $4)';
+  pool.query(text, values)
+    .then((res) => res)
+    .catch((error) => console.log(error));
+});
+
+const getReports = (() => {
+  // const text = 'SELECT latLng, img, description, physical_address FROM reports';
+  pool.query('SELECT latLng, img, description, physical_address FROM reports')
+    .then((reports) => {
+      console.log(reports);
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+});
 
 module.exports = {
   insertUser,
+  createReport,
+  getReports,
 };
+
+//to shell into our RDS, you'll need to run this command from the terminal:
+// psql --host=<insert host address (from amazon) from .env here> --port=5432 --username=<insert username from .env here> --password --dbname=<insert dbname from .env here>
+//then you'll be prompted to give a password. Use the password from .env file.
+
+
+
+
+
+
+
 
 //ALL THIS CRAP IS CARIN'S NOTES, WHICH SHE WILL DELETE LATER. PLEASE DON"T DELETE RIGHT NOW.
 // CONNECTIONSTRING = 'postgres://postgres:123@localhost:5432/floodbud';
@@ -90,7 +121,6 @@ module.exports = {
 // //   connectionString: isProduction ? process.env.DATABASE_URL : connectionString,
 // //   ssl: isProduction,
 // // })
-// //END carin's shit
 
 
 // //NOTES from node-postgres
