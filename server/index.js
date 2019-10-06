@@ -2,7 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const bodyParser = require('body-parser');
 const path = require('path');
-const { insertUser, createReport } = require('../database/dbindex');
+const { insertUser, createReport, getReports } = require('../database/dbindex');
 const { getRainfall, createAddress } = require('./APIhelpers');
 
 const PORT = process.env.PORT || 8080;
@@ -53,7 +53,7 @@ app.post('/submitReport', (req, res) => {
       createReport(reportData);
     })
     .then(() => {
-      res.status(201).send('got ya report...Allen')
+      res.status(201).send('got ya report...Allen');
     })
     .catch((error) => {
       console.log(error);
@@ -73,6 +73,12 @@ app.get('/addUser', (req, res) => {
     });
 });
 
+// GET req from frontend when user loads any page that renders a map.
+// This fn gets all flood reports from db, and returns them to the user.
+app.get('/floodReports', async (req, res) => {
+  const reports = await getReports();
+  res.status(201).json(reports.rows);
+});
 
 app.listen(PORT, () => {
   console.log('Floodbuddies be listening on: 8080');
