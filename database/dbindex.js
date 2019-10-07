@@ -36,7 +36,7 @@ const insertUser = () => new Promise((resolve, reject) => {
 });
 
 const createReport = ((reportInfo) => {
-  const values = [reportInfo.latLng, reportInfo.img, reportInfo.desc, reportInfo.location];
+  const values = [reportInfo.latLng, reportInfo.img, reportInfo.desc, reportInfo.physicalAddress];
   const text = 'INSERT INTO reports(latLng, img, description, physical_address) VALUES($1, $2, $3, $4)';
   pool.query(text, values)
     .then((res) => res)
