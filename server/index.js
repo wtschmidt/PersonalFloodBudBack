@@ -79,8 +79,10 @@ app.get('/addUser', (req, res) => {
 // GET req from frontend when user loads any page that renders a map.
 // This fn gets all flood reports from db, and returns them to the user.
 app.get('/floodReports', async (req, res) => {
-  const reports = await getReports();
-  res.status(201).json(reports.rows);
+  await getReports()
+    .then((reports) => {
+      res.json(reports);
+    });
 });
 
 app.listen(PORT, () => {
