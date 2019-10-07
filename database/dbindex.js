@@ -48,7 +48,8 @@ const getReports = (() => {
   // const text = 'SELECT latLng, img, description, physical_address FROM reports';
   pool.query('SELECT latLng, img, description, physical_address FROM reports')
     .then((reports) => {
-      console.log(reports);
+      console.log(reports.rows);
+      return reports.rows;
     })
     .catch((error) => {
       console.log(error);
