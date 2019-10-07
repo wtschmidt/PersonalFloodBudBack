@@ -15,11 +15,10 @@ CREATE TABLE users (
 
 CREATE TABLE reports (
   id SERIAL PRIMARY KEY,
-  location varchar(255),
+  latLng varchar(255),
   img varchar(255),
   description varchar(255),
-  report_location varchar(255),
-  elevation varchar(255),
+  physical_address varchar(255),
   user_id INTEGER REFERENCES users (id)
 );
 
