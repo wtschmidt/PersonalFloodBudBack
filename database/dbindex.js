@@ -44,14 +44,14 @@ const createReport = ((reportInfo) => {
     console.log(error));
 });
 
-const getReports = (() => {
+const getReports = () => new Promise((resolve, reject) => {
   // const text = 'SELECT latLng, img, description, physical_address FROM reports';
   pool.query('SELECT latLng, img, description, physical_address FROM reports')
     .then((reports) => {
-      console.log(reports);
+      resolve(reports.rows);
     })
     .catch((error) => {
-      console.log(error);
+      reject(error);
     });
 });
 
