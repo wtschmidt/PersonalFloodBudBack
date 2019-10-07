@@ -13,6 +13,7 @@ const app = express();
 app.use(bodyParser.json());
 
 // Property of Pesto -> API_KEY: AIzaSyAbJOa8X-CeBSal5VFPQPT1Qkhd-XTnf0s
+// Property of Pesto -> Weather_KEY: yepxYOZ9rt28QeEGiMu0tW8K75qlkrHG
 
 // const angularStaticDir = path.join(__dirname, '../../flood/dist/flood');
 const angularStaticDir = path.join(__dirname, '../../Floods-thesis/dist/flood');
