@@ -40,7 +40,8 @@ const createReport = ((reportInfo) => {
   const text = 'INSERT INTO reports(latLng, img, description, physical_address) VALUES($1, $2, $3, $4)';
   pool.query(text, values)
     .then((res) => res)
-    .catch((error) => console.log(error));
+    .catch((error) => 
+    console.log(error));
 });
 
 const getReports = (() => {
