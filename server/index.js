@@ -40,18 +40,17 @@ app.get('/rainfall', (req, res) => getRainfall()
   }));
 
 app.post('/submitReport', (req, res) => {
-  createAddress(req.body.report.latLng)
-    .then((returnedAddress) => {
-      reportData = {
-        desc: req.body.report.desc,
-        latLng: req.body.report.latLng,
-        img: req.body.report.img || null,
-        physicalAddress: returnedAddress,
-      };
-    })
-    .then(() => {
-      createReport(reportData);
-    })
+  // createAddress(req.body.report.latLng)
+  //   .then((returnedAddress) => {
+  //     reportData = {
+  //       desc: req.body.report.desc,
+  //       latLng: req.body.report.latLng,
+  //       img: req.body.report.img || null,
+  //       physicalAddress: returnedAddress,
+  //     };
+  //   })
+  //   .then(() => {
+  createReport(req.body.report)
     .then(() => {
       res.status(201).send('got ya report...Allen');
     })
