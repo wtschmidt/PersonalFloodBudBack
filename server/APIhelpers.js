@@ -8,7 +8,11 @@ const getRainfall = () => {
     .then((allWeather) => allWeather.data[0].PrecipitationSummary.Precipitation.Imperial.Value);
 };
 
+const convertToGeo = (latLng) => {
+  return axios.get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latLng}&key=AIzaSyDCQchp8XgMTPdeHQG_4EJ8ytTv7bWPP3c`)
+};
 
 module.exports = {
   getRainfall,
+  convertToGeo,
 };

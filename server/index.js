@@ -3,7 +3,7 @@ const axios = require('axios');
 const bodyParser = require('body-parser');
 const path = require('path');
 const { insertUser } = require('../database/dbindex');
-const { getRainfall } = require('./APIhelpers');
+const { getRainfall, convertToGeo } = require('./APIhelpers');
 
 const PORT = process.env.PORT || 8080;
 
@@ -19,9 +19,10 @@ const angularStaticDir = path.join(__dirname, '../../Floods-thesis/dist/flood');
 
 app.use(express.static(angularStaticDir));
 
-app.get('/convert-address', (req, res) => {
+app.get('/convert-address/:latLng', (req, res) => {
   console.log(req.params);
-  axios.get('');
+  return convertToGeo(req.params.latLng);
+  // axios.get('');
 });
 
 app.get('/route', (req, res) => {
