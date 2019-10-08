@@ -26,7 +26,8 @@
     "express": "^4.17.1",
     "node": "^12.11.0",
     "pg": "^7.12.1",
-    "pg-native": "^3.0.0"
+    "pg-native": "^3.0.0",
+    "turf-google-maps": "^0.9.13"
   },
   "devDependencies": {
     "eslint": "^6.1.0",
