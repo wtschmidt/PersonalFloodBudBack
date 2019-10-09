@@ -34,6 +34,15 @@ app.get('/map', (req, res) => {
   };
 
   const route = turf.shortestPath(start, end, options);
+
+  const routeCoordsArray = route.geometry.coordinates;
+  console.log(routeCoordsArray, "this is the coords array");
+  //snap these coords to a road using google's snapToRoads API,
+  //take returned lat/lng from that API req and send it to google agm directions
+  //send the return of that to front end to render on the client side map
+  const directions = {};
+
+  
   // axios.get('https://api.openbrewerydb.org/breweries')
   //   .then((breweries) => {
   //     res.status(201).send(breweries.data);
