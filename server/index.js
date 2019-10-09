@@ -53,6 +53,8 @@ app.get('/map', (req, res) => {
   const result = routeCoordsArray.map((coordPair) => ({ location: { lat: coordPair[1], lng: coordPair[0] } }));
   directions.waypoints = result;
 
+  //send back directions object with origin, desintation, and waypoints formatted for use with agm
+  res.status(201).send(directions);
 
 
   // axios.get('https://api.openbrewerydb.org/breweries')
