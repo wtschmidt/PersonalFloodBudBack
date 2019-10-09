@@ -20,17 +20,28 @@ app.use(express.static(angularStaticDir));
 
 let reportData;
 
-app.get('/map', (req, res) => {
-  const point1 = turf.point([-90.080587, 29.977581]);
-  const bufferedPoint1 = turf.buffer(point1, 0.05, { units: 'miles' });
-  const point2 = turf.point([-90.082742, 29.979062]);
+app.post('/getMap', (req, res) => {
+  console.log(req);
+  const point1 = turf.point([-90.078370, 29.976051]);
+  const bufferedPoint1 = turf.buffer(point1, 0.1, { units: 'miles' });
+  const point2 = turf.point([-90.072157, 29.971722]);
   const bufferedPoint2 = turf.buffer(point2, 0.05, { units: 'miles' });
 
-  const start = [-90.087654, 29.982425];
-  const end = [-90.073903, 29.973242];
+  // console.log(bufferedPoint1, 'this is bufferedPoint1'); // returns Object {type: "Feature", properties: Object, geometry: Object}
+
+  const obstacles = turf.featureCollection([bufferedPoint1, bufferedPoint2]);
+  console.log(obstacles, "this is obstacles");
+
+  //going to need to be the origin and desination lat/lng from the http req from front end,
+  //with obstacles = sections that are flood reports
+  // const start = [-90.087654, 29.982425];
+  // const end = [-90.073903, 29.973242];
+  const start = [parseFloat(req.body.mapReqInfo.origin.lng), parseFloat(req.body.mapReqInfo.origin.lat)];
+  const end = [parseFloat(req.body.mapReqInfo.destination.lng), parseFloat(req.body.mapReqInfo.destination.lat)];
   const options = {
     // obstacles: turf.polygon([[[-90.080587, 29.977581], [-90.080445, 29.977483], [-90.080514, 29.977549], [-90.080587, 29.977581]]]),
-    obstacles: bufferedPoint1.geometry, bufferedPoint2.geometry,
+    obstacles,
+    // : bufferedPoint1.geometry,
   };
 
   const route = turf.shortestPath(start, end, options);
