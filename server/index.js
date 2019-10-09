@@ -25,6 +25,15 @@ app.get('/map', (req, res) => {
   const bufferedPoint1 = turf.buffer(point1, 0.05, { units: 'miles' });
   const point2 = turf.point([-90.082742, 29.979062]);
   const bufferedPoint2 = turf.buffer(point2, 0.05, { units: 'miles' });
+
+  const start = [-90.087654, 29.982425];
+  const end = [-90.073903, 29.973242];
+  const options = {
+    // obstacles: turf.polygon([[[-90.080587, 29.977581], [-90.080445, 29.977483], [-90.080514, 29.977549], [-90.080587, 29.977581]]]),
+    obstacles: bufferedPoint1.geometry, bufferedPoint2.geometry,
+  };
+
+  const route = turf.shortestPath(start, end, options);
   // axios.get('https://api.openbrewerydb.org/breweries')
   //   .then((breweries) => {
   //     res.status(201).send(breweries.data);
