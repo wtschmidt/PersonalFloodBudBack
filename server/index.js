@@ -41,8 +41,16 @@ app.get('/map', (req, res) => {
   //take returned lat/lng from that API req and send it to google agm directions
   //send the return of that to front end to render on the client side map
   const directions = {};
+  //add origin prop in directions that takes first lat/lng from routeCoordsArray as beginning point
+  directions.origin = { lat: routeCoordsArray[0][1], lng: routeCoordsArray[0][0] };
+  //add destination prop in directions that takes last lat/lng from routeCoordsArray as ending point
+  directions.destination = { lat: routeCoordsArray[routeCoordsArray.length - 1][1], lng: routeCoordsArray[routeCoordsArray.length - 1][0] };
+  //chop off first and last lat/lng combos from routeCoordsArray so that only the middle points will be used as waypoints in directions variable
+  routeCoordsArray.shift();
+  routeCoordsArray.pop();
 
-  
+
+
   // axios.get('https://api.openbrewerydb.org/breweries')
   //   .then((breweries) => {
   //     res.status(201).send(breweries.data);
