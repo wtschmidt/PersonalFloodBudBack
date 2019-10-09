@@ -49,6 +49,10 @@ app.get('/map', (req, res) => {
   routeCoordsArray.shift();
   routeCoordsArray.pop();
 
+  //loop through all remaining lat/lngs in routeCoordsArray and set them up as waypoints in the directions variable
+  const result = routeCoordsArray.map((coordPair) => ({ location: { lat: coordPair[1], lng: coordPair[0] } }));
+  directions.waypoints = result;
+
 
 
   // axios.get('https://api.openbrewerydb.org/breweries')
