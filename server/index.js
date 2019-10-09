@@ -1,5 +1,6 @@
 const express = require('express');
 const axios = require('axios');
+const turf = require('@turf/turf');
 const bodyParser = require('body-parser');
 const path = require('path');
 const { insertUser, createReport, getReports } = require('../database/dbindex');
@@ -19,15 +20,19 @@ app.use(express.static(angularStaticDir));
 
 let reportData;
 
-app.get('/route', (req, res) => {
-  axios.get('https://api.openbrewerydb.org/breweries')
-    .then((breweries) => {
-      res.status(201).send(breweries.data);
-    })
-    .catch((err) => {
-      console.log(err);
-      res.send(500);
-    });
+app.get('/map', (req, res) => {
+  const point1 = turf.point([-90.080587, 29.977581]);
+  const bufferedPoint1 = turf.buffer(point1, 0.05, { units: 'miles' });
+  const point2 = turf.point([-90.082742, 29.979062]);
+  const bufferedPoint2 = turf.buffer(point2, 0.05, { units: 'miles' });
+  // axios.get('https://api.openbrewerydb.org/breweries')
+  //   .then((breweries) => {
+  //     res.status(201).send(breweries.data);
+  //   })
+  //   .catch((err) => {
+  //     console.log(err);
+  //     res.send(500);
+  //   });
 });
 
 app.get('/rainfall', (req, res) => getRainfall()
