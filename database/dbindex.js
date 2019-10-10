@@ -55,10 +55,22 @@ const getReports = () => new Promise((resolve, reject) => {
     });
 });
 
+const getUsersReports = (userId) => new Promise((resolve, reject) => {
+  const id = userId;
+  pool.query(`SELECT latLng, img, description, physical_address FROM reports WHERE user_id=${id}`)
+    .then((reports) => {
+      resolve(reports.rows);
+    })
+    .catch((error) => {
+      reject(error);
+    });
+});
+
 module.exports = {
   insertUser,
   createReport,
   getReports,
+  getUsersReports,
 };
 
 //to shell into our RDS, you'll need to run this command from the terminal:
