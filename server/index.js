@@ -19,6 +19,8 @@ app.use(bodyParser.json());
 const angularStaticDir = path.join(__dirname, '../../flood/dist/flood');
 
 app.use(express.static(angularStaticDir));
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
 let reportData;
 
