@@ -3,9 +3,12 @@ const axios = require('axios');
 const turf = require('@turf/turf');
 const bodyParser = require('body-parser');
 const path = require('path');
+const cloudinary = require('cloudinary').v2;
+const config = require('../config.js');
 const { insertUser, createReport, getReports } = require('../database/dbindex');
 const { getRainfall, createAddress, formatWaypoints } = require('./APIhelpers');
 
+cloudinary.config(config);
 const PORT = process.env.PORT || 8080;
 
 
@@ -117,17 +120,43 @@ app.get('/rainfall', (req, res) => getRainfall()
 
 app.post('/submitReport', async (req, res) => {
   let returnedAddress;
-  if (!req.body.location) {
+
+  // user is using current location
+  // find the address of the user's location
+  if (!req.body.report.location) {
     returnedAddress = await createAddress(req.body.report.latLng);
   }
-  reportData = {
-    desc: req.body.report.desc,
-    latLng: req.body.report.latLng,
-    img: req.body.report.img || null,
-    physicalAddress: returnedAddress || req.body.location,
-  };
-  await createReport(reportData);
-  res.status(201).send('got ya report...Allen');
+
+  // user has image
+  // get a url string from cloudinary for report img
+  // send that report into the database
+  if (req.body.report.img) {
+    cloudinary.uploader.upload(req.body.report.img, (error, result) => result)
+      .then((imgAssets) => {
+        reportData = {
+          desc: req.body.report.desc,
+          latLng: req.body.report.latLng,
+          img: imgAssets.secure_url,
+          physicalAddress: returnedAddress || req.body.location,
+        };
+      })
+      .then(() => {
+        createReport(reportData);
+      })
+      .then(() => {
+        res.status(201).send('got ya report...Allen');
+      });
+  } else {
+    // user does not have image
+    reportData = {
+      desc: req.body.report.desc,
+      latLng: req.body.report.latLng,
+      img: null,
+      physicalAddress: returnedAddress || req.body.location,
+    };
+    await createReport(reportData);
+    res.status(201).send('got ya report...Allen');
+  }
 });
 
 app.get('/addUser', (req, res) => {
@@ -155,6 +184,10 @@ app.get('/floodReports', (req, res) => {
     });
   // const reports = await getReports();
   // res.status(201).json(reports.rows);
+});
+
+app.get('*', (req, res) => {
+  res.status(200).sendFile(path.join(__dirname, '../../Floods/dist/flood/index.html'));
 });
 
 app.listen(PORT, () => {
