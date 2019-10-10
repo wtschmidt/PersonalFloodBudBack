@@ -1,12 +1,18 @@
 const express = require('express');
+const env = require('dotenv');
 const axios = require('axios');
 const turf = require('@turf/turf');
 const bodyParser = require('body-parser');
 const path = require('path');
+
+env.config();
+const client = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const cloudinary = require('cloudinary').v2;
+const {
+  insertUser, createReport, getReports, getContacts,
+} = require('../database/dbindex');
+const { getRainfall, createAddress } = require('./APIhelpers');
 const config = require('../config.js');
-const { insertUser, createReport, getReports } = require('../database/dbindex');
-const { getRainfall, createAddress, formatWaypoints } = require('./APIhelpers');
 
 cloudinary.config(config);
 const PORT = process.env.PORT || 8080;
@@ -182,8 +188,31 @@ app.get('/floodReports', (req, res) => {
   // res.status(201).json(reports.rows);
 });
 
+app.post('/submitMessage', async (req, res) => {
+  console.log(req);
+  const message = {};
+  const latLng = `${req.body.message.lat},${req.body.message.lng}`;
+  message.address = await createAddress(latLng);
+  message.contacts = await getContacts();
+  message.contacts.forEach((contact) => {
+    client.messages.create(
+      {
+        body: `${req.body.message.message} - This is my current location: ${message.address}`,
+        from: process.env.TWILIO_NUMBER,
+        to: contact.phone_number,
+      },
+    )
+      .then((test) => {
+        console.log(test);
+      });
+  });
+
+  console.log(message);
+  res.send(200);
+});
+
 app.get('*', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, '../../flood/dist/flood'));
+  res.status(200).sendFile(path.join(__dirname, '../../flood/dist/flood/'));
 });
 
 app.listen(PORT, () => {
