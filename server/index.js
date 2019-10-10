@@ -2,7 +2,9 @@ const express = require('express');
 const env = require('dotenv');
 const bodyParser = require('body-parser');
 const path = require('path');
-const client = require('twilio')('AC1ee0f262823bfe3d0533012071f833b2', '69929a95d113b123d4fc1259d367d783');
+
+env.config();
+const client = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const cloudinary = require('cloudinary').v2;
 const {
   insertUser, createReport, getReports, getContacts,
@@ -10,7 +12,6 @@ const {
 const { getRainfall, createAddress } = require('./APIhelpers');
 const config = require('../config.js');
 
-env.config();
 cloudinary.config(config);
 const PORT = process.env.PORT || 8080;
 
@@ -113,7 +114,7 @@ app.post('/submitMessage', async (req, res) => {
     client.messages.create(
       {
         body: `${req.body.message.message} - This is my current location: ${message.address}`,
-        from: '+12563635326',
+        from: process.env.TWILIO_NUMBER,
         to: contact.phone_number,
       },
     )
