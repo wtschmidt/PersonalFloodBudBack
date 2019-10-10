@@ -13,8 +13,8 @@ const PORT = process.env.PORT || 8080;
 
 const app = express();
 
-app.use(bodyParser.json());
-
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
 const angularStaticDir = path.join(__dirname, '../../flood/dist/flood');
 
@@ -100,7 +100,7 @@ app.get('/floodReports', (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, '../../Floods/dist/flood/index.html'));
+  res.status(200).sendFile(path.join(__dirname, '../../flood/dist/flood/index.html'));
 });
 
 app.listen(PORT, () => {
