@@ -1,12 +1,16 @@
 const express = require('express');
-const axios = require('axios');
+const env = require('dotenv');
 const bodyParser = require('body-parser');
 const path = require('path');
+const client = require('twilio')('AC1ee0f262823bfe3d0533012071f833b2', '69929a95d113b123d4fc1259d367d783');
 const cloudinary = require('cloudinary').v2;
-const config = require('../config.js');
-const { insertUser, createReport, getReports, getContacts } = require('../database/dbindex');
+const {
+  insertUser, createReport, getReports, getContacts,
+} = require('../database/dbindex');
 const { getRainfall, createAddress } = require('./APIhelpers');
+const config = require('../config.js');
 
+env.config();
 cloudinary.config(config);
 const PORT = process.env.PORT || 8080;
 
@@ -102,9 +106,19 @@ app.get('/floodReports', (req, res) => {
 app.post('/submitMessage', async (req, res) => {
   console.log(req);
   const message = {};
-  const latLng = req.body.message.lat + ',' + req.body.message.lng;
+  const latLng = `${req.body.message.lat},${req.body.message.lng}`;
   message.address = await createAddress(latLng);
   message.contacts = await getContacts();
+  client.messages.create(
+    {
+      body: `${req.body.message.message} - This is my current location: ${message.address}`,
+      from: '+12563635326',
+      to: message.contacts[0].phone_number,
+    },
+  )
+    .then((test) => {
+      console.log(test);
+    });
   console.log(message);
   res.send(200);
 });
