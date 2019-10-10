@@ -14,8 +14,8 @@ const PORT = process.env.PORT || 8080;
 
 const app = express();
 
-app.use(bodyParser.json());
-
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
 const angularStaticDir = path.join(__dirname, '../../flood/dist/flood');
 
