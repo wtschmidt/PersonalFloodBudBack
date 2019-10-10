@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const cloudinary = require('cloudinary').v2;
 const config = require('../config.js');
-const { insertUser, createReport, getReports } = require('../database/dbindex');
+const { insertUser, createReport, getReports, getContacts } = require('../database/dbindex');
 const { getRainfall, createAddress } = require('./APIhelpers');
 
 cloudinary.config(config);
@@ -16,7 +16,7 @@ const app = express();
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
-const angularStaticDir = path.join(__dirname, '../../flood/dist/flood');
+const angularStaticDir = path.join(__dirname, '../../Floods/dist/flood');
 
 app.use(express.static(angularStaticDir));
 
@@ -99,8 +99,18 @@ app.get('/floodReports', (req, res) => {
   // res.status(201).json(reports.rows);
 });
 
+app.post('/submitMessage', async (req, res) => {
+  console.log(req);
+  const message = {};
+  const latLng = req.body.message.lat + ',' + req.body.message.lng;
+  message.address = await createAddress(latLng);
+  message.contacts = await getContacts();
+  console.log(message);
+  res.send(200);
+});
+
 app.get('*', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, '../../flood/dist/flood/index.html'));
+  res.status(200).sendFile(path.join(__dirname, '../../Floods/dist/flood/index.html'));
 });
 
 app.listen(PORT, () => {
