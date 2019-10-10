@@ -109,16 +109,19 @@ app.post('/submitMessage', async (req, res) => {
   const latLng = `${req.body.message.lat},${req.body.message.lng}`;
   message.address = await createAddress(latLng);
   message.contacts = await getContacts();
-  client.messages.create(
-    {
-      body: `${req.body.message.message} - This is my current location: ${message.address}`,
-      from: '+12563635326',
-      to: message.contacts[0].phone_number,
-    },
-  )
-    .then((test) => {
-      console.log(test);
-    });
+  message.contacts.forEach((contact) => {
+    client.messages.create(
+      {
+        body: `${req.body.message.message} - This is my current location: ${message.address}`,
+        from: '+12563635326',
+        to: contact.phone_number,
+      },
+    )
+      .then((test) => {
+        console.log(test);
+      });
+  });
+
   console.log(message);
   res.send(200);
 });
