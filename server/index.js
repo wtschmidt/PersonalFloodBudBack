@@ -19,17 +19,6 @@ app.use(express.static(angularStaticDir));
 
 let reportData;
 
-app.get('/route', (req, res) => {
-  axios.get('https://api.openbrewerydb.org/breweries')
-    .then((breweries) => {
-      res.status(201).send(breweries.data);
-    })
-    .catch((err) => {
-      console.log(err);
-      res.send(500);
-    });
-});
-
 app.get('/rainfall', (req, res) => getRainfall()
   .then((rainTotal) => {
     res.json(rainTotal);
@@ -89,6 +78,10 @@ app.get('/floodReports', (req, res) => {
     });
   // const reports = await getReports();
   // res.status(201).json(reports.rows);
+});
+
+app.get('*', (req, res) => {
+  res.status(200).sendFile(path.join(__dirname, '../../Floods/dist/flood/index.html'));
 });
 
 app.listen(PORT, () => {
