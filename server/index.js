@@ -105,7 +105,7 @@ app.get('/floodReports', (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, '../../Floods/dist/flood/index.html'));
+  res.status(200).sendFile(path.join(__dirname, '../../Floods-thesis/dist/flood'));
 });
 
 app.listen(PORT, () => {
