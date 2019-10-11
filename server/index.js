@@ -68,15 +68,12 @@ app.post('/getMap', async (req, res) => {
       // directions.origin = { lat: response.data.snappedPoints[0].location.latitude, lng: response.data.snappedPoints[0].location.longitude };
       // directions.destination = { lat: response.data.snappedPoints[response.data.snappedPoints.length - 1].location.latitude, lng: response.data.snappedPoints[response.data.snappedPoints.length - 1].location.longitude };
       mapped = response.data.snappedPoints.slice(1, response.data.snappedPoints.length - 1).map((points) => ({ location: { lat: points.location.latitude, lng: points.location.longitude } }));
-      console.log('this is mapped', mapped);
     });
   const coordsForElevation = mapped.map((coord) => [coord.location.lat, coord.location.lng]);
   await elevationData(coordsForElevation)
     .then((results) => {
-      lowPoints = results.filter((result) => result.elevation < 0.2);
-      console.log(lowPoints);
+      lowPoints = results.filter((result) => result.elevation < 0.5);
     });
-    console.log(lowPoints);
   if (lowPoints.length) {
     lowPoints.forEach((point) => {
       const elevationPoint = turf.point([point.location.lng, point.location.lat]);
@@ -97,8 +94,6 @@ app.post('/getMap', async (req, res) => {
         // directions.origin = { lat: response.data.snappedPoints[0].location.latitude, lng: response.data.snappedPoints[0].location.longitude };
         // directions.destination = { lat: response.data.snappedPoints[response.data.snappedPoints.length - 1].location.latitude, lng: response.data.snappedPoints[response.data.snappedPoints.length - 1].location.longitude };
         const newMapped = response.data.snappedPoints.slice(1, response.data.snappedPoints.length - 1).map((points) => ({ location: { lat: points.location.latitude, lng: points.location.longitude } }));
-        console.log('this is mapped', mapped);
-
         directions.waypoints = newMapped;
         res.status(201).send(directions);
       });
