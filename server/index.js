@@ -11,9 +11,7 @@ const cloudinary = require('cloudinary').v2;
 const {
   insertUser, createReport, getReports, getContacts,
 } = require('../database/dbindex');
-const {
-  getRainfall, createAddress, formatWaypoints, elevationData,
-} = require('./APIhelpers');
+const { getRainfall, createAddress, formatWaypoints, get311, elevationData } = require('./APIhelpers');
 const config = require('../config.js');
 
 cloudinary.config(config);

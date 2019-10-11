@@ -1,7 +1,7 @@
 const axios = require('axios');
 require('dotenv').config();
 
-const { ACCUWEATHER_APIKEY, GOOGLE_APIKEY } = process.env;
+const { ACCUWEATHER_APIKEY, GOOGLE_APIKEY, CARIN_GOOGLE_APIKEY } = process.env;
 
 const googleMapsClient = require('@google/maps').createClient({
   key: `${CARIN_GOOGLE_APIKEY}`,
@@ -17,6 +17,21 @@ const createAddress = (coord) => {
   axios.get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${coord}&key=${GOOGLE_APIKEY}`)
     .then((physicalAddress) => physicalAddress.data.results[0].formatted_address);
 };
+
+const get311 = () => { return new Promise((resolve, reject) => {
+  const currentDate = new Date();
+  const dateTime = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}T${currentDate.getHours()}:00:00`;
+  const prevDateTime = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}T${currentDate.getHours() - 4}:00:00`;
+  console.log(dateTime, prevDateTime);
+  // axios.get(`https://data.nola.gov/resource/2jgv-pqrq.json?$where=date_created between '${prevDateTime}' and '${dateTime}'&request_type=Roads/Drainage`)
+  axios.get("https://data.nola.gov/resource/2jgv-pqrq.json?$where=date_created between '2019-10-10T09:00:00' and '2019-10-11T12:00:00'&request_type=Roads/Drainage")
+    .then((response) => {
+      console.log(response);
+      resolve(response.data);
+    });
+});
+};
+
 
 const formatWaypoints = ((routeCoordsArray) => {
   let string = '';
@@ -53,5 +68,6 @@ module.exports = {
   getRainfall,
   createAddress,
   formatWaypoints,
+  get311,
   elevationData,
 };
