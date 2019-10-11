@@ -205,11 +205,6 @@ app.get('*', (req, res) => {
   res.status(200).sendFile(path.join(__dirname, '../../flood/dist/flood'));
 });
 
-app.get('/geo', (req, res) => {
-  elevationData()
-    .then((data) => res.send(data));
-});
-
 app.get('/getUsersReports:{id}');
 
 app.listen(PORT, () => {
