@@ -8,8 +8,9 @@ const path = require('path');
 env.config();
 const client = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const cloudinary = require('cloudinary').v2;
-const config = require('../config.js');
-const { insertUser, createReport, getReports, getContacts } = require('../database/dbindex');
+const {
+  insertUser, createReport, getReports, getContacts,
+} = require('../database/dbindex');
 const {
   getRainfall, createAddress, formatWaypoints, elevationData,
 } = require('./APIhelpers');
