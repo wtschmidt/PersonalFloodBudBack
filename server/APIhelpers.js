@@ -26,7 +26,6 @@ const get311 = () => { return new Promise((resolve, reject) => {
   // axios.get(`https://data.nola.gov/resource/2jgv-pqrq.json?$where=date_created between '${prevDateTime}' and '${dateTime}'&request_type=Roads/Drainage`)
   axios.get("https://data.nola.gov/resource/2jgv-pqrq.json?$where=date_created between '2019-10-10T09:00:00' and '2019-10-11T12:00:00'&request_type=Roads/Drainage")
     .then((response) => {
-      console.log(response);
       resolve(response.data);
     });
 });
