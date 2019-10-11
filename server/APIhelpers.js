@@ -1,7 +1,7 @@
 const axios = require('axios');
 require('dotenv').config();
 
-const { ACCUWEATHER_APIKEY, GOOGLE_APIKEY } = process.env;
+const { ACCUWEATHER_APIKEY, GOOGLE_APIKEY, CARIN_GOOGLE_APIKEY } = process.env;
 
 const googleMapsClient = require('@google/maps').createClient({
   key: `${CARIN_GOOGLE_APIKEY}`,
