@@ -1,7 +1,12 @@
 const axios = require('axios');
 require('dotenv').config();
 
-const { ACCUWEATHER_APIKEY, GOOGLE_APIKEY } = process.env;
+const { ACCUWEATHER_APIKEY, GOOGLE_APIKEY, CARIN_GOOGLE_APIKEY } = process.env;
+
+const googleMapsClient = require('@google/maps').createClient({
+  key: `${GOOGLE_APIKEY}`,
+  Promise,
+});
 
 const getRainfall = () => axios.get(`http://dataservice.accuweather.com/currentconditions/v1/348585?apikey=${ACCUWEATHER_APIKEY}&details=true`)
   .then((allWeather) => allWeather.data[0].PrecipitationSummary.Precipitation.Imperial.Value);
@@ -29,8 +34,24 @@ const formatWaypoints = ((routeCoordsArray) => {
   // });
 });
 
+const elevationData = ((path) => new Promise((resolve, reject) => {
+  googleMapsClient.elevationAlongPath({
+    path,
+    samples: path.length,
+  })
+    .asPromise()
+    .then((response) => {
+      console.log(response.json.results);
+      resolve(response.json.results);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+}));
+
 module.exports = {
   getRainfall,
   createAddress,
   formatWaypoints,
+  elevationData,
 };
