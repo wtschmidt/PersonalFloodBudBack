@@ -11,7 +11,7 @@ const cloudinary = require('cloudinary').v2;
 const {
   insertUser, createReport, getReports, getContacts,
 } = require('../database/dbindex');
-const { getRainfall, createAddress, formatWaypoints } = require('./APIhelpers');
+const { getRainfall, createAddress, formatWaypoints, get311 } = require('./APIhelpers');
 const config = require('../config.js');
 
 cloudinary.config(config);
@@ -33,7 +33,7 @@ app.post('/getMap', async (req, res) => {
   const directions = {};
   const bufferArr = [];
   const reports = await getReports();
- 
+  
   reports.forEach((report) => {
     if (report.latlng) {
       const arr = report.latlng.split(',');
