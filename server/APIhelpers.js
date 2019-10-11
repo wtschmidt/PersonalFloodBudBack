@@ -4,7 +4,7 @@ require('dotenv').config();
 const { ACCUWEATHER_APIKEY, GOOGLE_APIKEY, CARIN_GOOGLE_APIKEY } = process.env;
 
 const googleMapsClient = require('@google/maps').createClient({
-  key: `${CARIN_GOOGLE_APIKEY}`,
+  key: `${GOOGLE_APIKEY}`,
   Promise,
 });
 
