@@ -35,6 +35,16 @@ const insertUser = () => new Promise((resolve, reject) => {
   });
 });
 
+const getContacts = () => new Promise((resolve, reject) => {
+  pool.query('SELECT * FROM emergencycontacts WHERE user_id = 1')
+    .then((reports) => {
+      resolve(reports.rows);
+    })
+    .catch((error) => {
+      reject(error);
+    });
+});
+
 const createReport = ((reportInfo) => {
   const values = [reportInfo.latLng, reportInfo.img, reportInfo.desc, reportInfo.physicalAddress];
   const text = 'INSERT INTO reports(latLng, img, description, physical_address) VALUES($1, $2, $3, $4)';
@@ -71,6 +81,7 @@ module.exports = {
   createReport,
   getReports,
   getUsersReports,
+  getContacts,
 };
 
 //to shell into our RDS, you'll need to run this command from the terminal:

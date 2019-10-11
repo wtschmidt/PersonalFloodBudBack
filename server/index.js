@@ -1,14 +1,19 @@
 const express = require('express');
+const env = require('dotenv');
 const axios = require('axios');
 const turf = require('@turf/turf');
 const bodyParser = require('body-parser');
 const path = require('path');
+
+env.config();
+const client = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const cloudinary = require('cloudinary').v2;
 const config = require('../config.js');
-const { insertUser, createReport, getReports } = require('../database/dbindex');
+const { insertUser, createReport, getReports, getContacts } = require('../database/dbindex');
 const {
   getRainfall, createAddress, formatWaypoints, elevationData,
 } = require('./APIhelpers');
+const config = require('../config.js');
 
 cloudinary.config(config);
 const PORT = process.env.PORT || 8080;
@@ -146,13 +151,16 @@ app.post('/submitReport', async (req, res) => {
   // get a url string from cloudinary for report img
   // send that report into the database
   if (req.body.report.img) {
-    cloudinary.uploader.upload(req.body.report.img, (error, result) => result)
+    cloudinary.uploader.upload(req.body.report.img, (error, result) => {
+      console.log(result);
+      return result;
+    })
       .then((imgAssets) => {
         reportData = {
           desc: req.body.report.desc,
           latLng: req.body.report.latLng,
           img: imgAssets.secure_url,
-          physicalAddress: returnedAddress || req.body.location,
+          physicalAddress: returnedAddress || req.body.report.location,
         };
       })
       .then(() => {
@@ -201,8 +209,31 @@ app.get('/floodReports', (req, res) => {
   // res.status(201).json(reports.rows);
 });
 
+app.post('/submitMessage', async (req, res) => {
+  console.log(req);
+  const message = {};
+  const latLng = `${req.body.message.lat},${req.body.message.lng}`;
+  message.address = await createAddress(latLng);
+  message.contacts = await getContacts();
+  message.contacts.forEach((contact) => {
+    client.messages.create(
+      {
+        body: `${req.body.message.message} - This is my current location: ${message.address}`,
+        from: process.env.TWILIO_NUMBER,
+        to: contact.phone_number,
+      },
+    )
+      .then((test) => {
+        console.log(test);
+      });
+  });
+
+  console.log(message);
+  res.send(200);
+});
+
 app.get('*', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, '../../flood/dist/flood'));
+  res.status(200).sendFile(path.join(__dirname, '../../flood/dist/flood/'));
 });
 
 app.get('/getUsersReports:{id}');
