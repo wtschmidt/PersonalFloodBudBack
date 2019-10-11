@@ -11,7 +11,7 @@ const cloudinary = require('cloudinary').v2;
 const {
   insertUser, createReport, getReports, getContacts,
 } = require('../database/dbindex');
-const { getRainfall, createAddress } = require('./APIhelpers');
+const { getRainfall, createAddress, formatWaypoints } = require('./APIhelpers');
 const config = require('../config.js');
 
 cloudinary.config(config);
@@ -133,13 +133,16 @@ app.post('/submitReport', async (req, res) => {
   // get a url string from cloudinary for report img
   // send that report into the database
   if (req.body.report.img) {
-    cloudinary.uploader.upload(req.body.report.img, (error, result) => result)
+    cloudinary.uploader.upload(req.body.report.img, (error, result) => {
+      console.log(result);
+      return result;
+    })
       .then((imgAssets) => {
         reportData = {
           desc: req.body.report.desc,
           latLng: req.body.report.latLng,
           img: imgAssets.secure_url,
-          physicalAddress: returnedAddress || req.body.location,
+          physicalAddress: returnedAddress || req.body.report.location,
         };
       })
       .then(() => {
