@@ -11,7 +11,9 @@ const cloudinary = require('cloudinary').v2;
 const {
   insertUser, createReport, getReports, getContacts,
 } = require('../database/dbindex');
-const { getRainfall, createAddress, formatWaypoints, get311, elevationData } = require('./APIhelpers');
+const {
+  getRainfall, createAddress, formatWaypoints, get311, elevationData,
+} = require('./APIhelpers');
 const config = require('../config.js');
 
 cloudinary.config(config);
@@ -45,8 +47,23 @@ app.post('/getMap', async (req, res) => {
     }
   });
 
-  const obstacles = turf.featureCollection(bufferArr);
+  await get311()
+    .then((cityReports) => {
+      console.log(cityReports);
+      if (cityReports.length) {
+        cityReports.features.forEach((feature) => {
+          const cityPoint = turf.buffer(feature, 0.5, { units: 'miles' });
+          bufferArr.push(cityPoint);
+        });
+      }
+      // cityReports.forEach((cityReport) => {
+      //   const cityPoint = turf.point([cityReport.longitude, cityReport.latitude]);
+      //   const cityBufferedPoint = turf.buffer(cityPoint, 0.5, { units: 'miles' });
+      //   bufferArr.push(cityBufferedPoint);
+    });
 
+ const obstacles = await turf.featureCollection(bufferArr);
+  
   // going to need to be the origin and desination lat/lng from the http req from front end,
   // with obstacles = sections that are flood reports
   const start = [parseFloat(req.body.mapReqInfo.origin.lng), parseFloat(req.body.mapReqInfo.origin.lat)];
