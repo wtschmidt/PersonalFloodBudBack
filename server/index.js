@@ -5,13 +5,25 @@ const turf = require('@turf/turf');
 const bodyParser = require('body-parser');
 const path = require('path');
 
+
 env.config();
 const client = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const cloudinary = require('cloudinary').v2;
 const {
-  insertUser, createReport, getReports, getContacts,
+  insertUser,
+  createReport,
+  getReports,
+  getContacts,
+
 } = require('../database/dbindex');
-const { getRainfall, createAddress, formatWaypoints, get311, elevationData } = require('./APIhelpers');
+
+const {
+  getRainfall,
+  createAddress,
+  formatWaypoints,
+  get311,
+  elevationData,
+} = require('./APIhelpers');
 const config = require('../config.js');
 
 cloudinary.config(config);
@@ -20,10 +32,22 @@ const PORT = process.env.PORT || 8080;
 
 const app = express();
 
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
-const angularStaticDir = path.join(__dirname, '../../flood/dist/flood');
+app.use(bodyParser.json());
+
+const {
+  distRoute,
+} = process.env;
+
+app.use(bodyParser.json({
+  limit: '10mb',
+}));
+app.use(bodyParser.urlencoded({
+  extended: true,
+  limit: '10mb',
+}));
+
+const angularStaticDir = path.join(__dirname, '../../flood-front-end/dist/flood/');
 
 app.use(express.static(angularStaticDir));
 
@@ -40,7 +64,9 @@ app.post('/getMap', async (req, res) => {
     if (report.latlng) {
       const arr = report.latlng.split(',');
       const point = turf.point([parseFloat(arr[1]), parseFloat(arr[0])]);
-      const bufferedPoint = turf.buffer(point, 0.5, { units: 'miles' });
+      const bufferedPoint = turf.buffer(point, 0.5, {
+        units: 'miles',
+      });
       bufferArr.push(bufferedPoint);
     }
   });
@@ -71,7 +97,12 @@ app.post('/getMap', async (req, res) => {
       // I don't think we'll need these next two lines that set props of origin and destination in response, but leaving them for now, just in case
       // directions.origin = { lat: response.data.snappedPoints[0].location.latitude, lng: response.data.snappedPoints[0].location.longitude };
       // directions.destination = { lat: response.data.snappedPoints[response.data.snappedPoints.length - 1].location.latitude, lng: response.data.snappedPoints[response.data.snappedPoints.length - 1].location.longitude };
-      mapped = response.data.snappedPoints.slice(1, response.data.snappedPoints.length - 1).map((points) => ({ location: { lat: points.location.latitude, lng: points.location.longitude } }));
+      mapped = response.data.snappedPoints.slice(1, response.data.snappedPoints.length - 1).map((points) => ({
+        location: {
+          lat: points.location.latitude,
+          lng: points.location.longitude,
+        },
+      }));
     });
   const coordsForElevation = mapped.map((coord) => [coord.location.lat, coord.location.lng]);
   await elevationData(coordsForElevation)
@@ -81,7 +112,9 @@ app.post('/getMap', async (req, res) => {
   if (lowPoints.length) {
     lowPoints.forEach((point) => {
       const elevationPoint = turf.point([point.location.lng, point.location.lat]);
-      const bufferedElevationPoint = turf.buffer(elevationPoint, 0.1, { units: 'miles' });
+      const bufferedElevationPoint = turf.buffer(elevationPoint, 0.1, {
+        units: 'miles',
+      });
       bufferArr.push(bufferedElevationPoint);
     });
 
@@ -97,7 +130,12 @@ app.post('/getMap', async (req, res) => {
         // I don't think we'll need these next two lines that set props of origin and destination in response, but leaving them for now, just in case
         // directions.origin = { lat: response.data.snappedPoints[0].location.latitude, lng: response.data.snappedPoints[0].location.longitude };
         // directions.destination = { lat: response.data.snappedPoints[response.data.snappedPoints.length - 1].location.latitude, lng: response.data.snappedPoints[response.data.snappedPoints.length - 1].location.longitude };
-        const newMapped = response.data.snappedPoints.slice(1, response.data.snappedPoints.length - 1).map((points) => ({ location: { lat: points.location.latitude, lng: points.location.longitude } }));
+        const newMapped = response.data.snappedPoints.slice(1, response.data.snappedPoints.length - 1).map((points) => ({
+          location: {
+            lat: points.location.latitude,
+            lng: points.location.longitude,
+          },
+        }));
         directions.waypoints = newMapped;
         res.status(201).send(directions);
       });
@@ -151,9 +189,9 @@ app.post('/submitReport', async (req, res) => {
   // send that report into the database
   if (req.body.report.img) {
     cloudinary.uploader.upload(req.body.report.img, (error, result) => {
-      console.log(result);
-      return result;
-    })
+        console.log(result);
+        return result;
+      })
       .then((imgAssets) => {
         reportData = {
           desc: req.body.report.desc,
@@ -174,7 +212,7 @@ app.post('/submitReport', async (req, res) => {
       desc: req.body.report.desc,
       latLng: req.body.report.latLng,
       img: null,
-      physicalAddress: returnedAddress || req.body.location,
+      physicalAddress: returnedAddress || req.body.report.location,
     };
     await createReport(reportData);
     res.status(201).send('got ya report...Allen');
@@ -215,13 +253,11 @@ app.post('/submitMessage', async (req, res) => {
   message.address = await createAddress(latLng);
   message.contacts = await getContacts();
   message.contacts.forEach((contact) => {
-    client.messages.create(
-      {
+    client.messages.create({
         body: `${req.body.message.message} - This is my current location: ${message.address}`,
         from: process.env.TWILIO_NUMBER,
         to: contact.phone_number,
-      },
-    )
+      })
       .then((test) => {
         console.log(test);
       });
@@ -232,10 +268,17 @@ app.post('/submitMessage', async (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, '../../flood/dist/flood/'));
+  res.status(200).sendFile(path.join(__dirname, '../../flood-front-end/dist/flood/index.html'));
 });
 
-app.get('/getUsersReports:{id}');
+app.get('/getUsersReports/:{id}');
+
+app.get('/reportLocation/:{latlng}', ((req, res) => {
+  createAddress(req.param.latlng).then((result) => {
+    console.log(result);
+    res.send(result);
+  });
+}));
 
 app.listen(PORT, () => {
   console.log('Floodbuddies be listening on: 8080');
