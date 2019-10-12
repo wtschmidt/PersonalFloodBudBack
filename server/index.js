@@ -1,21 +1,37 @@
 const express = require('express');
+const env = require('dotenv');
 const axios = require('axios');
+const turf = require('@turf/turf');
 const bodyParser = require('body-parser');
 const path = require('path');
+
+
+env.config();
+const client = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+const cloudinary = require('cloudinary').v2;
 const {
   insertUser,
   createReport,
-  getReports
+  getReports,
+  getContacts,
+
 } = require('../database/dbindex');
+
 const {
   getRainfall,
-  createAddress
+  createAddress,
+  formatWaypoints,
+  get311,
+  elevationData,
 } = require('./APIhelpers');
+const config = require('../config.js');
 
+cloudinary.config(config);
 const PORT = process.env.PORT || 8080;
 
 
 const app = express();
+
 
 app.use(bodyParser.json());
 
@@ -23,21 +39,131 @@ const {
   distRoute,
 } = process.env;
 
-const angularStaticDir = path.join(__dirname, distRoute);
+app.use(bodyParser.json({
+  limit: '10mb',
+}));
+app.use(bodyParser.urlencoded({
+  extended: true,
+  limit: '10mb',
+}));
+
+const angularStaticDir = path.join(__dirname, '../../flood-front-end/dist/flood/');
 
 app.use(express.static(angularStaticDir));
 
 let reportData;
 
-app.get('/route', (req, res) => {
-  axios.get('https://api.openbrewerydb.org/breweries')
-    .then((breweries) => {
-      res.status(201).send(breweries.data);
-    })
-    .catch((err) => {
-      console.log(err);
-      res.send(500);
+app.post('/getMap', async (req, res) => {
+  const directions = {};
+  const bufferArr = [];
+  let mapped;
+  let lowPoints;
+  const reports = await getReports();
+
+  reports.forEach((report) => {
+    if (report.latlng) {
+      const arr = report.latlng.split(',');
+      const point = turf.point([parseFloat(arr[1]), parseFloat(arr[0])]);
+      const bufferedPoint = turf.buffer(point, 0.5, {
+        units: 'miles',
+      });
+      bufferArr.push(bufferedPoint);
+    }
+  });
+
+  const obstacles = turf.featureCollection(bufferArr);
+
+  // going to need to be the origin and desination lat/lng from the http req from front end,
+  // with obstacles = sections that are flood reports
+  const start = [parseFloat(req.body.mapReqInfo.origin.lng), parseFloat(req.body.mapReqInfo.origin.lat)];
+  const end = [parseFloat(req.body.mapReqInfo.destination.lng), parseFloat(req.body.mapReqInfo.destination.lat)];
+  const options = {
+    obstacles,
+  };
+
+  const route = await turf.shortestPath(start, end, options);
+
+  const routeCoordsArray = route.geometry.coordinates;
+
+  // format coordinates from routeCoordsArray to be in appropriate form for snapToRoads API below
+  const allCoords = await formatWaypoints(routeCoordsArray);
+
+  // snap the coords from allCoords to roads, using google's snapToRoads API,
+  // take returned lat/lng of origin, destin from that API req and send it to google agm directions
+  // send the return of that to front end to render on the client side map
+
+  await axios.get(`https://roads.googleapis.com/v1/snapToRoads?path=${allCoords}&interpolate=false&key=AIzaSyDCQchp8XgMTPdeHQG_4EJ8ytTv7bWPP3c`)
+    .then((response) => {
+      // I don't think we'll need these next two lines that set props of origin and destination in response, but leaving them for now, just in case
+      // directions.origin = { lat: response.data.snappedPoints[0].location.latitude, lng: response.data.snappedPoints[0].location.longitude };
+      // directions.destination = { lat: response.data.snappedPoints[response.data.snappedPoints.length - 1].location.latitude, lng: response.data.snappedPoints[response.data.snappedPoints.length - 1].location.longitude };
+      mapped = response.data.snappedPoints.slice(1, response.data.snappedPoints.length - 1).map((points) => ({
+        location: {
+          lat: points.location.latitude,
+          lng: points.location.longitude,
+        },
+      }));
     });
+  const coordsForElevation = mapped.map((coord) => [coord.location.lat, coord.location.lng]);
+  await elevationData(coordsForElevation)
+    .then((results) => {
+      lowPoints = results.filter((result) => result.elevation < 0.5);
+    });
+  if (lowPoints.length) {
+    lowPoints.forEach((point) => {
+      const elevationPoint = turf.point([point.location.lng, point.location.lat]);
+      const bufferedElevationPoint = turf.buffer(elevationPoint, 0.1, {
+        units: 'miles',
+      });
+      bufferArr.push(bufferedElevationPoint);
+    });
+
+    const newObstacles = turf.featureCollection(bufferArr);
+    const newOptions = {
+      obstacles: newObstacles,
+    };
+    const newRoute = turf.shortestPath(start, end, newOptions);
+    const newRouteCoordsArray = newRoute.geometry.coordinates;
+    const newAllCoords = await formatWaypoints(newRouteCoordsArray);
+    await axios.get(`https://roads.googleapis.com/v1/snapToRoads?path=${newAllCoords}&interpolate=false&key=AIzaSyDCQchp8XgMTPdeHQG_4EJ8ytTv7bWPP3c`)
+      .then((response) => {
+        // I don't think we'll need these next two lines that set props of origin and destination in response, but leaving them for now, just in case
+        // directions.origin = { lat: response.data.snappedPoints[0].location.latitude, lng: response.data.snappedPoints[0].location.longitude };
+        // directions.destination = { lat: response.data.snappedPoints[response.data.snappedPoints.length - 1].location.latitude, lng: response.data.snappedPoints[response.data.snappedPoints.length - 1].location.longitude };
+        const newMapped = response.data.snappedPoints.slice(1, response.data.snappedPoints.length - 1).map((points) => ({
+          location: {
+            lat: points.location.latitude,
+            lng: points.location.longitude,
+          },
+        }));
+        directions.waypoints = newMapped;
+        res.status(201).send(directions);
+      });
+  } else {
+    directions.waypoints = mapped;
+    res.status(201).send(directions);
+  }
+
+
+  // The code below will also work, but it seems to give less accurate results.
+  // Leaving the code for now just in case we need to use it after we get elevation into the maps, too.
+
+  // // //add origin prop in directions that takes first lat/lng from routeCoordsArray as beginning point
+  // directions.origin = { lat: routeCoordsArray[0][1], lng: routeCoordsArray[0][0] };
+  // // //add destination prop in directions that takes last lat/lng from routeCoordsArray as ending point
+  // directions.destination = { lat: routeCoordsArray[routeCoordsArray.length - 1][1], lng: routeCoordsArray[routeCoordsArray.length - 1][0] };
+  // // //chop off first and last lat/lng combos from routeCoordsArray so that only the middle points will be used as waypoints in directions variable
+  // routeCoordsArray.shift();
+  // routeCoordsArray.pop();
+
+  // // //loop through all remaining lat/lngs in routeCoordsArray and set them up as waypoints in the directions variable
+  // const result = routeCoordsArray.map((coordPair) => ({ location: { lat: coordPair[1], lng: coordPair[0] } }));
+  // const points = [result[4], result[5], result[6], result[7], result[8], result[9]];
+  // directions.waypoints = result;
+  // // directions.waypoints = points;
+
+  // // send back directions object with origin, desintation, and waypoints formatted for use with agm
+  // res.status(201).send(directions);
 });
 
 app.get('/rainfall', (req, res) => getRainfall()
@@ -51,27 +177,46 @@ app.get('/rainfall', (req, res) => getRainfall()
 
 app.post('/submitReport', async (req, res) => {
   let returnedAddress;
-  if (!req.body.location) {
+
+  // user is using current location
+  // find the address of the user's location
+  if (!req.body.report.location) {
     returnedAddress = await createAddress(req.body.report.latLng);
   }
-  // .then((returnedAddress) => {
-  reportData = {
-    desc: req.body.report.desc,
-    latLng: req.body.report.latLng,
-    img: req.body.report.img || null,
-    physicalAddress: returnedAddress || req.body.location,
-  };
-  // })
-  // .then(() => {
-  await createReport(reportData);
-  // })
-  // .then(() => {
-  res.status(201).send('got ya report...Allen');
-  // })
-  // .catch((error) => {
-  //   console.log(error);
-  //   res.status(504).send('something went wrong with your report');
-  // });
+
+  // user has image
+  // get a url string from cloudinary for report img
+  // send that report into the database
+  if (req.body.report.img) {
+    cloudinary.uploader.upload(req.body.report.img, (error, result) => {
+        console.log(result);
+        return result;
+      })
+      .then((imgAssets) => {
+        reportData = {
+          desc: req.body.report.desc,
+          latLng: req.body.report.latLng,
+          img: imgAssets.secure_url,
+          physicalAddress: returnedAddress || req.body.report.location,
+        };
+      })
+      .then(() => {
+        createReport(reportData);
+      })
+      .then(() => {
+        res.status(201).send('got ya report...Allen');
+      });
+  } else {
+    // user does not have image
+    reportData = {
+      desc: req.body.report.desc,
+      latLng: req.body.report.latLng,
+      img: null,
+      physicalAddress: returnedAddress || req.body.report.location,
+    };
+    await createReport(reportData);
+    res.status(201).send('got ya report...Allen');
+  }
 });
 
 app.get('/addUser', (req, res) => {
@@ -101,6 +246,50 @@ app.get('/floodReports', (req, res) => {
   // res.status(201).json(reports.rows);
 });
 
+app.post('/submitMessage', async (req, res) => {
+  console.log(req);
+  const message = {};
+  const latLng = `${req.body.message.lat},${req.body.message.lng}`;
+  message.address = await createAddress(latLng);
+  message.contacts = await getContacts();
+  message.contacts.forEach((contact) => {
+    client.messages.create({
+        body: `${req.body.message.message} - This is my current location: ${message.address}`,
+        from: process.env.TWILIO_NUMBER,
+        to: contact.phone_number,
+      })
+      .then((test) => {
+        console.log(test);
+      });
+  });
+
+  console.log(message);
+  res.send(200);
+});
+
+app.get('*', (req, res) => {
+  res.status(200).sendFile(path.join(__dirname, '../../flood-front-end/dist/flood/index.html'));
+});
+
+app.get('/getUsersReports/:{id}');
+
+app.get('/reportLocation/:{latlng}', ((req, res) => {
+  createAddress(req.param.latlng).then((result) => {
+    console.log(result);
+    res.send(result);
+  });
+}));
+
 app.listen(PORT, () => {
   console.log('Floodbuddies be listening on: 8080');
 });
+
+
+// LEAVING lines below right now, just for reference. Will delete later.
+// const slimBuffer = bufferArr.splice(0, 15);
+// const point1 = turf.point([-90.078370, 29.976051]);
+// const bufferedPoint1 = turf.buffer(point1, 0.2, { units: 'miles' });
+// const point2 = turf.point([-90.072157, 29.971722]);
+// const bufferedPoint2 = turf.buffer(point2, 0.2, { units: 'miles' });
+
+// const obstacles = turf.featureCollection([bufferedPoint1, bufferedPoint2]);
