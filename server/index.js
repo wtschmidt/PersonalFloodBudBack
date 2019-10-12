@@ -233,7 +233,7 @@ app.post('/submitMessage', async (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, '../../Floods-thesis/dist/flood'));
+  res.status(200).sendFile(path.join(__dirname, '../../Floods-thesis/dist/flood/index.html'));
 });
 
 app.get('/getUsersReports:{id}');
