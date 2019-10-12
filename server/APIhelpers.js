@@ -18,6 +18,21 @@ const createAddress = (coord) => {
     .then((physicalAddress) => physicalAddress.data.results[0].formatted_address);
 };
 
+const get311 = () => { return new Promise((resolve, reject) => {
+  const currentDate = new Date();
+  const dateTime = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}T${currentDate.getHours()}:00:00`;
+  const prevDateTime = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}T${currentDate.getHours() - 4}:00:00`;
+  console.log(dateTime, prevDateTime);
+  // axios.get(`https://data.nola.gov/resource/2jgv-pqrq.json?$where=date_created between '${prevDateTime}' and '${dateTime}'&request_type=Roads/Drainage`)
+  axios.get("https://data.nola.gov/resource/2jgv-pqrq.json?$where=date_created between '2019-10-10T09:00:00' and '2019-10-11T12:00:00'&request_type=Roads/Drainage")
+    .then((response) => {
+      console.log(response);
+      resolve(response.data);
+    });
+});
+};
+
+
 const formatWaypoints = ((routeCoordsArray) => {
   let string = '';
   for (let i = 0; i < routeCoordsArray.length; i += 1) {
@@ -53,5 +68,6 @@ module.exports = {
   getRainfall,
   createAddress,
   formatWaypoints,
+  get311,
   elevationData,
 };
