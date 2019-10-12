@@ -189,9 +189,9 @@ app.post('/submitReport', async (req, res) => {
   // send that report into the database
   if (req.body.report.img) {
     cloudinary.uploader.upload(req.body.report.img, (error, result) => {
-        console.log(result);
-        return result;
-      })
+      console.log(result);
+      return result;
+    })
       .then((imgAssets) => {
         reportData = {
           desc: req.body.report.desc,
@@ -254,10 +254,10 @@ app.post('/submitMessage', async (req, res) => {
   message.contacts = await getContacts();
   message.contacts.forEach((contact) => {
     client.messages.create({
-        body: `${req.body.message.message} - This is my current location: ${message.address}`,
-        from: process.env.TWILIO_NUMBER,
-        to: contact.phone_number,
-      })
+      body: `${req.body.message.message} - This is my current location: ${message.address}`,
+      from: process.env.TWILIO_NUMBER,
+      to: contact.phone_number,
+    })
       .then((test) => {
         console.log(test);
       });
