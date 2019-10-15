@@ -64,6 +64,7 @@ passport.use(new GoogleStrategy({
 // Used to stuff a piece of information into a cookie
 passport.serializeUser((user, done) => {
   done(null, user);
+  // done(null, { id: 'what the ever loving fuck?' });
 });
 
 // Used to decode the received cookie and persist session
@@ -73,14 +74,15 @@ passport.deserializeUser((id, done) => {
     .catch((err) => console.log(err));
 });
 
-// // Middleware to check if the user is authenticated
-// const isUserAuthenticated = (req, res, next) => {
-//   if (req.user) {
-//     next();
-//   } else {
-//     res.send('You must login!');
-//   }
-// };
+// Middleware to check if the user is authenticated
+const isUserAuthenticated = (req, res, next) => {
+  if (req.user) {
+    next();
+  } else {
+    // res.redirect('/');
+    res.send('You must login!');
+  }
+};
 
 // passport.authenticate middleware is used here to authenticate the request
 app.get('/auth/google', passport.authenticate('google', {
@@ -88,14 +90,9 @@ app.get('/auth/google', passport.authenticate('google', {
 }));
 
 // The middleware receives the data from Google and runs the function on Strategy config
-app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: 'localhost:8080' }), (req, res) => {
-  res.redirect('/');
+app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/' }), (req, res) => {
+  res.redirect(`/?id=${req.user.rows[0].googleid}`);
 });
-
-// // Secret route
-// app.get('/secret', isUserAuthenticated, (req, res) => {
-//   res.send('You have reached the secret route');
-// });
 
 // Logout route
 app.get('/logout', (req, res) => {
@@ -213,7 +210,7 @@ app.get('/rainfall', (req, res) => getRainfall()
     res.status(500);
   }));
 
-app.post('/submitReport', async (req, res) => {
+app.post('/submitReport', isUserAuthenticated, async (req, res) => {
   let returnedAddress;
 
   // user is using current location
@@ -284,7 +281,7 @@ app.get('/floodReports', (req, res) => {
   // res.status(201).json(reports.rows);
 });
 
-app.post('/submitMessage', async (req, res) => {
+app.post('/submitMessage', isUserAuthenticated, async (req, res) => {
   console.log(req);
   const message = {};
   const latLng = `${req.body.message.lat},${req.body.message.lng}`;
