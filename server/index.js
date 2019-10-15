@@ -64,7 +64,7 @@ app.post('/getMap', async (req, res) => {
     if (report.latlng) {
       const arr = report.latlng.split(',');
       const point = turf.point([parseFloat(arr[1]), parseFloat(arr[0])]);
-      const bufferedPoint = turf.buffer(point, 0.5, {
+      const bufferedPoint = turf.buffer(point, 0.7, {
         units: 'miles',
       });
       bufferArr.push(bufferedPoint);
