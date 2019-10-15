@@ -74,16 +74,6 @@ passport.deserializeUser((id, done) => {
     .catch((err) => console.log(err));
 });
 
-// Middleware to check if the user is authenticated
-const isUserAuthenticated = (req, res, next) => {
-  if (req.user) {
-    next();
-  } else {
-    // res.redirect('/');
-    res.send('You must login!');
-  }
-};
-
 // passport.authenticate middleware is used here to authenticate the request
 app.get('/auth/google', passport.authenticate('google', {
   scope: ['profile'], // Used to specify the required data
@@ -96,8 +86,7 @@ app.get('/auth/google/callback', passport.authenticate('google', { failureRedire
 
 // Logout route
 app.get('/logout', (req, res) => {
-  req.logout();
-  res.redirect('/');
+  req.session.destroy(() => res.redirect('/'));
 });
 
 let reportData;
@@ -210,7 +199,7 @@ app.get('/rainfall', (req, res) => getRainfall()
     res.status(500);
   }));
 
-app.post('/submitReport', isUserAuthenticated, async (req, res) => {
+app.post('/submitReport', async (req, res) => {
   let returnedAddress;
 
   // user is using current location
@@ -281,7 +270,7 @@ app.get('/floodReports', (req, res) => {
   // res.status(201).json(reports.rows);
 });
 
-app.post('/submitMessage', isUserAuthenticated, async (req, res) => {
+app.post('/submitMessage', async (req, res) => {
   console.log(req);
   const message = {};
   const latLng = `${req.body.message.lat},${req.body.message.lng}`;
