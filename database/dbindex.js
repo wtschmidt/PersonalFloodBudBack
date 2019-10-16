@@ -66,8 +66,8 @@ const insertUser = () => new Promise((resolve, reject) => {
   });
 });
 
-const getContacts = () => new Promise((resolve, reject) => {
-  pool.query('SELECT * FROM emergencycontacts WHERE user_id = 1')
+const getContacts = (user) => new Promise((resolve, reject) => {
+  pool.query(`SELECT * FROM emergencycontacts WHERE user_id = ${user.id}`)
     .then((reports) => {
       resolve(reports.rows);
     })

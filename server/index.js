@@ -331,14 +331,15 @@ app.post('/submitMessage', async (req, res) => {
   console.log(req);
   const message = {};
   const latLng = `${req.body.message.lat},${req.body.message.lng}`;
+  message.user = await findGoogleUser(req.body.message);
   message.address = await createAddress(latLng);
-  message.contacts = await getContacts();
+  message.contacts = await getContacts(message.user.rows[0]);
   message.contacts.forEach((contact) => {
     client.messages.create({
-        body: `${req.body.message.message} - This is my current location: ${message.address}`,
-        from: process.env.TWILIO_NUMBER,
-        to: contact.phone_number,
-      })
+      body: `${req.body.message.message} - This is my current location: ${message.address}`,
+      from: process.env.TWILIO_NUMBER,
+      to: contact.phone_number,
+    })
       .then((test) => {
         console.log(test);
       });
@@ -349,7 +350,7 @@ app.post('/submitMessage', async (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, `${DIST_INDEX}`));
+  res.status(200).sendFile(path.join(__dirname, `${DIST}`));
 });
 
 app.get('/getUsersReports/:{id}');
