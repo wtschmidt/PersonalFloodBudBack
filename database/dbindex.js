@@ -25,6 +25,35 @@ const pool = new Pool({
 // connection using created pool
 pool.connect();
 
+const findUser = (userId) => new Promise((resolve, reject) => {
+  pool.query(`SELECT * FROM users WHERE id=userId`, (error, results) => {
+    if (error) {
+      console.log(error);
+      return reject(error);
+    }
+    console.log(results);
+    return resolve(results);
+  });
+});
+
+const findGoogleUser = (userInfo) => new Promise ((resolve, reject) => {
+  pool.query(`SELECT * FROM users where googleId='${userInfo.id}'`)
+  .then((user) => resolve(user))
+  .catch((error) => console.log(error));
+});
+
+const findOrInsert = (userInfo) => new Promise((resolve, reject) => {
+  const values = [userInfo.id, userInfo.displayName];
+  const text = `INSERT INTO users (googleId, username) VALUES ('${userInfo.id}', '${userInfo.displayName}') ON CONFLICT (googleId) DO NOTHING`;
+  pool.query(text)
+    .then((reports) => {
+      console.log(reports);
+      resolve(reports);
+    })
+    .catch((error) => {
+      reject(error);
+    });
+});
 
 const insertUser = () => new Promise((resolve, reject) => {
   pool.query(`INSERT INTO users(firstName, lastName, email) VALUES('westo', 'pesto', 'wes@was.com)`, (error, results) => {
@@ -84,6 +113,9 @@ module.exports = {
   getReports,
   getUsersReports,
   getContacts,
+  findUser,
+  findOrInsert,
+  findGoogleUser,
 };
 
 //to shell into our RDS, you'll need to run this command from the terminal:

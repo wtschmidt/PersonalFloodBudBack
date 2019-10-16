@@ -4,25 +4,19 @@ const axios = require('axios');
 const turf = require('@turf/turf');
 const bodyParser = require('body-parser');
 const path = require('path');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const session = require('express-session');
 
 
 env.config();
 const client = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const cloudinary = require('cloudinary').v2;
 const {
-  insertUser,
-  createReport,
-  getReports,
-  getContacts,
-
+  insertUser, createReport, getReports, getContacts, findUser, findOrInsert, findGoogleUser,
 } = require('../database/dbindex');
-
 const {
-  getRainfall,
-  createAddress,
-  formatWaypoints,
-  get311,
-  elevationData,
+  getRainfall, createAddress, formatWaypoints, get311, elevationData,
 } = require('./APIhelpers');
 const config = require('../config.js');
 
@@ -31,9 +25,6 @@ const PORT = process.env.PORT || 8080;
 
 
 const app = express();
-
-
-app.use(bodyParser.json());
 
 const {
   distRoute,
@@ -52,6 +43,63 @@ app.use(bodyParser.urlencoded({
 const angularStaticDir = path.join(__dirname, `${DIST}`);
 
 app.use(express.static(angularStaticDir));
+
+app.use(session({
+  secret: 'SESSION_SECRET',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: true },
+}));
+
+app.use(passport.initialize()); // Used to initialize passport
+app.use(passport.session()); // Used to persist login sessions
+
+// Strategy config
+passport.use(new GoogleStrategy({
+  clientID: config.GOOGLE_CLIENT_ID,
+  clientSecret: config.GOOGLE_CLIENT_SECRET,
+  callbackURL: 'http://localhost:8080/auth/google/callback',
+},
+(accessToken, refreshToken, profile, cb) => {
+  findOrInsert(profile);
+  findGoogleUser(profile)
+    .then((user) => {
+      console.log(user);
+      cb(null, user);
+    })
+    .catch((error) => {
+      console.log(error);
+      cb(null, error);
+    });
+}));
+
+// Used to stuff a piece of information into a cookie
+passport.serializeUser((user, done) => {
+  done(null, user);
+  // done(null, { id: 'what the ever loving fuck?' });
+});
+
+// Used to decode the received cookie and persist session
+passport.deserializeUser((id, done) => {
+  findUser(id)
+    .then((user) => done(null, user))
+    .catch((err) => console.log(err));
+});
+
+// passport.authenticate middleware is used here to authenticate the request
+app.get('/auth/google', passport.authenticate('google', {
+  scope: ['profile'], // Used to specify the required data
+}));
+
+// The middleware receives the data from Google and runs the function on Strategy config
+app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/' }), (req, res) => {
+  res.redirect(`/?id=${req.user.rows[0].googleid}`);
+});
+
+// Logout route
+app.get('/logout', (req, res) => {
+  req.session.destroy(() => res.redirect('/'));
+});
 
 let reportData;
 
