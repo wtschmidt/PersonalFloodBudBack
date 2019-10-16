@@ -22,6 +22,9 @@ const createAddress = (coord) => {
     .then((physicalAddress) => {
       console.log('WE WANT THIS:', physicalAddress);
       return physicalAddress.data.results[0].formatted_address;
+    })
+    .catch((err) => {
+      console.error(err);
     });
 };
 

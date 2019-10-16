@@ -24,7 +24,7 @@ const {
   get311,
   elevationData,
 } = require('./APIhelpers');
-const config = require('../config.js');
+const config = require('../config');
 
 cloudinary.config(config);
 const PORT = process.env.PORT || 8080;
