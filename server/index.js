@@ -37,6 +37,8 @@ app.use(bodyParser.json());
 
 const {
   distRoute,
+  DIST,
+  DIST_INDEX,
 } = process.env;
 
 app.use(bodyParser.json({
@@ -47,7 +49,7 @@ app.use(bodyParser.urlencoded({
   limit: '10mb',
 }));
 
-const angularStaticDir = path.join(__dirname, '../../flood-front-end/dist/flood/');
+const angularStaticDir = path.join(__dirname, `${DIST}`);
 
 app.use(express.static(angularStaticDir));
 
@@ -283,7 +285,7 @@ app.post('/submitMessage', async (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, '../../flood-front-end/dist/flood/index.html'));
+  res.status(200).sendFile(path.join(__dirname, `${DIST_INDEX}`));
 });
 
 app.get('/getUsersReports/:{id}');
