@@ -8,9 +8,8 @@ CREATE TABLE users (
   id SERIAL PRIMARY KEY,
   firstName varchar(50),
   lastName varchar(50),
-  email varchar(50),
-  password varchar(50),
-  phone_number varchar(20)
+  googleId varchar(100) UNIQUE,
+  username varchar(100),
 );
 
 CREATE TABLE reports (
