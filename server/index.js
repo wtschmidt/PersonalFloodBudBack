@@ -37,6 +37,8 @@ app.use(bodyParser.json());
 
 const {
   distRoute,
+  DIST,
+  DIST_INDEX,
 } = process.env;
 
 app.use(bodyParser.json({
@@ -47,7 +49,7 @@ app.use(bodyParser.urlencoded({
   limit: '10mb',
 }));
 
-const angularStaticDir = path.join(__dirname, '../../flood-front-end/dist/flood/');
+const angularStaticDir = path.join(__dirname, `${DIST}`);
 
 app.use(express.static(angularStaticDir));
 
@@ -71,8 +73,23 @@ app.post('/getMap', async (req, res) => {
     }
   });
 
-  const obstacles = turf.featureCollection(bufferArr);
+  await get311()
+    .then((cityReports) => {
+      console.log(cityReports);
+      if (cityReports.length) {
+        cityReports.features.forEach((feature) => {
+          const cityPoint = turf.buffer(feature, 0.5, { units: 'miles' });
+          bufferArr.push(cityPoint);
+        });
+      }
+      // cityReports.forEach((cityReport) => {
+      //   const cityPoint = turf.point([cityReport.longitude, cityReport.latitude]);
+      //   const cityBufferedPoint = turf.buffer(cityPoint, 0.5, { units: 'miles' });
+      //   bufferArr.push(cityBufferedPoint);
+    });
 
+ const obstacles = await turf.featureCollection(bufferArr);
+  
   // going to need to be the origin and desination lat/lng from the http req from front end,
   // with obstacles = sections that are flood reports
   const start = [parseFloat(req.body.mapReqInfo.origin.lng), parseFloat(req.body.mapReqInfo.origin.lat)];
@@ -268,7 +285,7 @@ app.post('/submitMessage', async (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, '../../flood-front-end/dist/flood/index.html'));
+  res.status(200).sendFile(path.join(__dirname, `${DIST_INDEX}`));
 });
 
 app.get('/getUsersReports/:{id}');
