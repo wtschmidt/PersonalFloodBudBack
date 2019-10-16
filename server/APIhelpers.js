@@ -18,10 +18,13 @@ const getRainfall = () => axios.get(`http://dataservice.accuweather.com/currentc
 const createAddress = (coord) => {
   // need to take latLng coord and convert to physical address in words through API call to
   // google geoCode.
-  axios.get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${coord}&key=${GOOGLE_APIKEY}`)
+  return axios.get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${coord}&key=${GOOGLE_APIKEY}`)
     .then((physicalAddress) => {
       console.log('WE WANT THIS:', physicalAddress);
       return physicalAddress.data.results[0].formatted_address;
+    })
+    .catch((err) => {
+      console.error(err);
     });
 };
 
@@ -31,7 +34,7 @@ const get311 = () => new Promise((resolve, reject) => {
   const prevDateTime = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}T${currentDate.getHours() - 4}:00:00`;
   console.log(dateTime, prevDateTime);
   axios.get(`https://data.nola.gov/resource/2jgv-pqrq.json?$where=date_created between '${prevDateTime}' and '${dateTime}'&request_type=Roads/Drainage`)
-  // axios.get("https://data.nola.gov/resource/2jgv-pqrq.json?$where=date_created between '2019-10-10T09:00:00' and '2019-10-11T12:00:00'&request_type=Roads/Drainage")
+    // axios.get("https://data.nola.gov/resource/2jgv-pqrq.json?$where=date_created between '2019-10-10T09:00:00' and '2019-10-11T12:00:00'&request_type=Roads/Drainage")
     .then((response) => {
       resolve(response.data);
     });
