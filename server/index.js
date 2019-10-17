@@ -27,6 +27,7 @@ const {
   formatWaypoints,
   get311,
   elevationData,
+  graphHopper,
 } = require('./APIhelpers');
 const config = require('../config');
 
@@ -59,7 +60,7 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
   cookie: {
-    secure: true
+    secure: true,
   },
 }));
 
@@ -68,22 +69,22 @@ app.use(passport.session()); // Used to persist login sessions
 
 // Strategy config
 passport.use(new GoogleStrategy({
-    clientID: config.GOOGLE_CLIENT_ID,
-    clientSecret: config.GOOGLE_CLIENT_SECRET,
-    callbackURL: 'http://localhost:8080/auth/google/callback',
-  },
-  (accessToken, refreshToken, profile, cb) => {
-    findOrInsert(profile);
-    findGoogleUser(profile)
-      .then((user) => {
-        console.log(user);
-        cb(null, user);
-      })
-      .catch((error) => {
-        console.log(error);
-        cb(null, error);
-      });
-  }));
+  clientID: config.GOOGLE_CLIENT_ID,
+  clientSecret: config.GOOGLE_CLIENT_SECRET,
+  callbackURL: 'http://localhost:8080/auth/google/callback',
+},
+(accessToken, refreshToken, profile, cb) => {
+  findOrInsert(profile);
+  findGoogleUser(profile)
+    .then((user) => {
+      console.log(user);
+      cb(null, user);
+    })
+    .catch((error) => {
+      console.log(error);
+      cb(null, error);
+    });
+}));
 
 // Used to stuff a piece of information into a cookie
 passport.serializeUser((user, done) => {
@@ -105,7 +106,7 @@ app.get('/auth/google', passport.authenticate('google', {
 
 // The middleware receives the data from Google and runs the function on Strategy config
 app.get('/auth/google/callback', passport.authenticate('google', {
-  failureRedirect: '/'
+  failureRedirect: '/',
 }), (req, res) => {
   res.redirect(`/?id=${req.user.rows[0].googleid}`);
 });
@@ -141,7 +142,7 @@ app.post('/getMap', async (req, res) => {
       if (cityReports.length) {
         cityReports.features.forEach((feature) => {
           const cityPoint = turf.buffer(feature, 0.5, {
-            units: 'miles'
+            units: 'miles',
           });
           bufferArr.push(cityPoint);
         });
@@ -270,9 +271,9 @@ app.post('/submitReport', async (req, res) => {
   // send that report into the database
   if (req.body.report.img) {
     cloudinary.uploader.upload(req.body.report.img, (error, result) => {
-        console.log(result);
-        return result;
-      })
+      console.log(result);
+      return result;
+    })
       .then((imgAssets) => {
         reportData = {
           desc: req.body.report.desc,
