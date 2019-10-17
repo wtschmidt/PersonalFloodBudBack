@@ -69,22 +69,22 @@ app.use(passport.session()); // Used to persist login sessions
 
 // Strategy config
 passport.use(new GoogleStrategy({
-    clientID: config.GOOGLE_CLIENT_ID,
-    clientSecret: config.GOOGLE_CLIENT_SECRET,
-    callbackURL: 'http://localhost:8080/auth/google/callback',
-  },
-  (accessToken, refreshToken, profile, cb) => {
-    findOrInsert(profile);
-    findGoogleUser(profile)
-      .then((user) => {
-        console.log(user);
-        cb(null, user);
-      })
-      .catch((error) => {
-        console.log(error);
-        cb(null, error);
-      });
-  }));
+  clientID: config.GOOGLE_CLIENT_ID,
+  clientSecret: config.GOOGLE_CLIENT_SECRET,
+  callbackURL: 'http://localhost:8080/auth/google/callback',
+},
+(accessToken, refreshToken, profile, cb) => {
+  findOrInsert(profile);
+  findGoogleUser(profile)
+    .then((user) => {
+      console.log(user);
+      cb(null, user);
+    })
+    .catch((error) => {
+      console.log(error);
+      cb(null, error);
+    });
+}));
 
 // Used to stuff a piece of information into a cookie
 passport.serializeUser((user, done) => {
@@ -352,7 +352,7 @@ app.post('/submitMessage', async (req, res) => {
 
 app.get('*', (req, res) => {
   // res.status(200).sendFile(path.join(__dirname, '../../Floods-thesis/dist/flood/index.html')); ––––> Just in case;
-  res.status(200).sendFile(path.join(__dirname, `${DIST}`));
+  res.status(200).sendFile(path.join(__dirname, `${DIST_INDEX}`));
 });
 
 app.get('/getUsersReports/:{id}');
