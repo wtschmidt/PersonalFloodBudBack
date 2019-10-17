@@ -32,9 +32,6 @@ const PORT = process.env.PORT || 8080;
 
 const app = express();
 
-
-app.use(bodyParser.json());
-
 const {
   distRoute,
 } = process.env;
@@ -64,7 +61,7 @@ app.post('/getMap', async (req, res) => {
     if (report.latlng) {
       const arr = report.latlng.split(',');
       const point = turf.point([parseFloat(arr[1]), parseFloat(arr[0])]);
-      const bufferedPoint = turf.buffer(point, 0.7, {
+      const bufferedPoint = turf.buffer(point, 0.5, {
         units: 'miles',
       });
       bufferArr.push(bufferedPoint);
