@@ -17,6 +17,7 @@ const {
   createReport,
   getReports,
   getContacts,
+  addContacts,
   findUser,
   findOrInsert,
   findGoogleUser,
@@ -300,6 +301,40 @@ app.post('/submitReport', async (req, res) => {
   }
 });
 
+app.get('/getContacts', async (req, res) => {
+  console.log(req.query);
+  const userInfo = await findGoogleUser(req.query);
+  getContacts(userInfo.rows[0])
+    .then((contacts) => {
+      res.send(contacts);
+    })
+    .catch((error) => {
+      res.send(error);
+    });
+});
+
+app.post('/submitContacts', async (req, res) => {
+  console.log(req.body.contacts);
+  const userInfo = await findGoogleUser(req.body.contacts)
+  const contacts = {
+    user_id: userInfo.rows[0].id,
+    name1: req.body.contacts.name1,
+    name2: req.body.contacts.name2,
+    name3: req.body.contacts.name3,
+    phone1: req.body.contacts.phone1,
+    phone2: req.body.contacts.phone2,
+    phone3: req.body.contacts.phone3,
+  };
+
+  await addContacts(contacts)
+    .then(() => {
+      res.send(201);
+    })
+    .catch(() => {
+      res.send(500);
+    });
+});
+
 app.get('/addUser', (req, res) => {
   insertUser()
     .then((results) => {
@@ -350,7 +385,7 @@ app.post('/submitMessage', async (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, `${DIST}`));
+  res.status(200).sendFile(path.join(__dirname, `${DIST_INDEX}`));
 });
 
 app.get('/getUsersReports/:{id}');
