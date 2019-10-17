@@ -5,6 +5,7 @@ const {
   ACCUWEATHER_APIKEY,
   GOOGLE_APIKEY,
   CARIN_GOOGLE_APIKEY,
+  GRAPHHOPPER_APIKEY,
 } = process.env;
 
 const googleMapsClient = require('@google/maps').createClient({
@@ -72,10 +73,28 @@ const elevationData = ((path) => new Promise((resolve, reject) => {
     });
 }));
 
+const graphHopper = (points) => {
+  //https://graphhopper.com/api/1/route?point=29.977503, -90.080294&point=29.973898, -90.075252&elevation=true&points_encoded=false&ch.disable=true&block_area=29.975560, -90.077637,100&key=6d3d461a-e4c6-4ee5-9a35-330b5a129324
+  return axios.get(`https://graphhopper.com/api/1/route?point=${points.origin}&point=${points.destination}&elevation=true&points_encoded=false&ch.disable=true&block_area=${points.obstacles}&key=${GRAPHHOPPER_APIKEY}`)
+    .then((response) => {
+      console.log(response);
+      return response;
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+};
+
 module.exports = {
   getRainfall,
   createAddress,
   formatWaypoints,
   get311,
   elevationData,
+  graphHopper,
 };
+
+// GET https://graphhopper.com/api/1/route?
+// point=49.185578,8.549277&point=49.187137,8.535487&point=49.154412,8.574702&point=49.158956,8.58513&point=49.116592,8.575745&point=49.052883,8.520463&point=49.052883,8.520463&point=49.046426,8.467731&point=49.012472,8.446729&point=49.012472,8.446729&point=49.012472,8.446729&point=49.012472,8.446729&point=49.012472,8.446729&point=49.012472,8.446729&point=49.012472,8.446729&point=49.012472,8.446729&instructions=false&type=json&key=[THE_KEY]&vehicle=small_truck&locale=de&ch.disable=true&block_area=49.107694,8.573901,10%3B49.173614,8.550427,10
+
+
