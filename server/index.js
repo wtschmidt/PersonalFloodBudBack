@@ -301,6 +301,18 @@ app.post('/submitReport', async (req, res) => {
   }
 });
 
+app.get('/getContacts', async (req, res) => {
+  console.log(req.query);
+  const userInfo = await findGoogleUser(req.query);
+  getContacts(userInfo.rows[0])
+    .then((contacts) => {
+      res.send(contacts);
+    })
+    .catch((error) => {
+      res.send(error);
+    });
+});
+
 app.post('/submitContacts', async (req, res) => {
   console.log(req.body.contacts);
   const userInfo = await findGoogleUser(req.body.contacts)
@@ -373,7 +385,7 @@ app.post('/submitMessage', async (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, `${DIST}`));
+  res.status(200).sendFile(path.join(__dirname, `${DIST_INDEX}`));
 });
 
 app.get('/getUsersReports/:{id}');
