@@ -59,9 +59,9 @@ const formatWaypoints = ((routeCoordsArray) => {
 
 const elevationData = ((path) => new Promise((resolve, reject) => {
   googleMapsClient.elevationAlongPath({
-      path,
-      samples: path.length,
-    })
+    path,
+    samples: path.length,
+  })
     .asPromise()
     .then((response) => {
       console.log(response.json.results);
@@ -72,10 +72,23 @@ const elevationData = ((path) => new Promise((resolve, reject) => {
     });
 }));
 
+const graphHopper = (points) => {
+  //https://graphhopper.com/api/1/route?point=29.977503, -90.080294&point=29.973898, -90.075252&elevation=true&points_encoded=false&ch.disable=true&block_area=29.975560, -90.077637,100&key=6d3d461a-e4c6-4ee5-9a35-330b5a129324
+  return axios.get(`https://graphhopper.com/api/1/route?point=${points.origin}&point=${points.destination}&elevation=true&points_encoded=false&ch.disable=true&block_area=${points.obstacles}&key=${GRAPHHOPPER_APIKEY}`)
+    .then((response) => {
+      console.log(response);
+      return response;
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+};
+
 module.exports = {
   getRainfall,
   createAddress,
   formatWaypoints,
   get311,
   elevationData,
+  graphHopper,
 };
