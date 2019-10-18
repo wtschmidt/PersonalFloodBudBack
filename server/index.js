@@ -156,27 +156,29 @@ app.post('/getMap', async (req, res) => {
   const blockString = blockAreas.slice(0, blockAreas.length - 1);
   const start = `${parseFloat(req.body.mapReqInfo.origin.lat)},${parseFloat(req.body.mapReqInfo.origin.lng)}`;
   const end = `${parseFloat(req.body.mapReqInfo.destination.lat)},${parseFloat(req.body.mapReqInfo.destination.lng)}`;
-   graphHopper(start, end, blockString)
-    .then((waypoints) => {
+  await graphHopper(start, end, blockString)
+    .then(async (response) => {
+      console.log(response, 'this is the return from graphhopper');
+      const waypoints = response.data.paths[0].points.coordinates;
       lowPoints = waypoints.filter((waypoint) => waypoint[2] < 2.5);
       if (lowPoints.length) {
         lowPoints.forEach((point) => {
           blockAreas += (`${point[1]},${point[0]},100;`);
-          const newBlockString = blockAreas.slice(0, blockAreas.length - 1);
-          graphHopper(start, end, newBlockString)
-            .then((newWaypoints) => {
-              mapped = newWaypoints.map((eachPoint) => ({
-                location: {
-                  lat: eachPoint[1],
-                  lng: eachPoint[0],
-                },
-              }));
-              directions.waypoints = mapped;
-              mapped.unshift({ location: { lat: req.body.mapReqInfo.origin.lat, lng: req.body.mapReqInfo.origin.lng } });
-              mapped.push({ location: { lat: req.body.mapReqInfo.destination.lat, lng: req.body.mapReqInfo.destination.lng } });
-              res.status(201).send(directions);
-            });
         });
+        const newBlockString = blockAreas.slice(0, blockAreas.length - 1);
+        await graphHopper(start, end, newBlockString)
+          .then((newWaypoints) => {
+            mapped = newWaypoints.data.paths[0].points.coordinates.map((eachPoint) => ({
+              location: {
+                lat: eachPoint[1],
+                lng: eachPoint[0],
+              },
+            }));
+            directions.waypoints = mapped;
+            mapped.unshift({ location: { lat: req.body.mapReqInfo.origin.lat, lng: req.body.mapReqInfo.origin.lng } });
+            mapped.push({ location: { lat: req.body.mapReqInfo.destination.lat, lng: req.body.mapReqInfo.destination.lng } });
+            res.status(201).send(directions);
+          });
       } else {
         mapped = waypoints.map((point) => ({
           location: {
@@ -189,7 +191,6 @@ app.post('/getMap', async (req, res) => {
         mapped.push({ location: { lat: req.body.mapReqInfo.destination.lat, lng: req.body.mapReqInfo.destination.lng } });
         res.status(201).send(directions);
       }
-      // res.status(201).send(directions);
     })
     .catch((error) => console.log(error));
 
@@ -361,7 +362,7 @@ app.get('/getContacts', async (req, res) => {
 
 app.post('/submitContacts', async (req, res) => {
   console.log(req.body.contacts);
-  const userInfo = await findGoogleUser(req.body.contacts)
+  const userInfo = await findGoogleUser(req.body.contacts);
   const contacts = {
     user_id: userInfo.rows[0].id,
     name1: req.body.contacts.name1,
