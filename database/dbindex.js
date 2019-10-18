@@ -76,6 +76,24 @@ const getContacts = (user) => new Promise((resolve, reject) => {
     });
 });
 
+const addContacts = (contacts) => new Promise((resolve, reject) => {
+  for (let i = 1; i <= 3; i++) {
+    const phone = contacts[`phone${i}`];
+    const name = contacts[`name${i}`];
+    console.log(name, phone);
+    const text = `INSERT INTO emergencycontacts(phone_number, name, user_id) VALUES('${phone}', '${name}', '${contacts.user_id}')`;
+    pool.query(text)
+      .then((res) => {
+        console.log(res);
+        resolve(res);
+      })
+      .catch((error) => {
+        console.log(error);
+        reject(error);
+      });
+  }
+});
+
 const createReport = ((reportInfo) => {
   const values = [reportInfo.latLng, reportInfo.img, reportInfo.desc, reportInfo.physicalAddress];
   const text = 'INSERT INTO reports(latLng, img, description, physical_address) VALUES($1, $2, $3, $4)';
@@ -113,6 +131,7 @@ module.exports = {
   getReports,
   getUsersReports,
   getContacts,
+  addContacts,
   findUser,
   findOrInsert,
   findGoogleUser,
