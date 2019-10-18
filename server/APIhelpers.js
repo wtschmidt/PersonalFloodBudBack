@@ -3,6 +3,8 @@ require('dotenv').config();
 
 const {
   ACCUWEATHER_APIKEY,
+  ACCUWEATHER_APIKEY_WESTO,
+  ACCUWEATHER_APIKEY_MAY,
   GOOGLE_APIKEY,
   CARIN_GOOGLE_APIKEY,
   GRAPHHOPPER_APIKEY,
@@ -28,7 +30,6 @@ const createAddress = (coord) => {
       console.error(err);
     });
 };
-
 const get311 = () => new Promise((resolve, reject) => {
   const currentDate = new Date();
   const dateTime = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}T${currentDate.getHours()}:00:00`;
@@ -73,16 +74,10 @@ const elevationData = ((path) => new Promise((resolve, reject) => {
     });
 }));
 
-const graphHopper = (origin, destination, blockArea) => new Promise((resolve, reject) =>
-  // https://graphhopper.com/api/1/route?point=29.977503, -90.080294&point=29.973898, -90.075252&elevation=true&points_encoded=false&ch.disable=true&block_area=29.975560, -90.077637,100&key=6d3d461a-e4c6-4ee5-9a35-330b5a129324
-  axios.get(`https://graphhopper.com/api/1/route?point=${origin}&point=${destination}&elevation=true&points_encoded=false&ch.disable=true&block_area=${blockArea}&key=${GRAPHHOPPER_APIKEY}`)
-    .then((response) => {
-      console.log(response);
-      resolve(response.data.paths[0].points.coordinates);
-    })
-    .catch((err) => {
-      console.error(err);
-    }));
+const graphHopper = (origin, destination, blockArea) => {
+  // return axios.get('https://graphhopper.com/api/1/route?point=29.977503, -90.080294&point=29.973898, -90.075252&elevation=true&points_encoded=false&ch.disable=true&block_area=29.975560, -90.077637,100&key=6d3d461a-e4c6-4ee5-9a35-330b5a129324')
+  return axios.get(`https://graphhopper.com/api/1/route?point=${origin}&point=${destination}&elevation=true&points_encoded=false&ch.disable=true&block_area=${blockArea}&key=${GRAPHHOPPER_APIKEY}`);
+};
 
 module.exports = {
   getRainfall,
