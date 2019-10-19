@@ -5,6 +5,8 @@ const {
   ACCUWEATHER_APIKEY,
   GOOGLE_APIKEY,
   CARIN_GOOGLE_APIKEY,
+  AERIS_ID,
+  AERIS_SECRET
 } = process.env;
 
 const googleMapsClient = require('@google/maps').createClient({
@@ -12,15 +14,17 @@ const googleMapsClient = require('@google/maps').createClient({
   Promise,
 });
 
-const getRainfall = () => axios.get(`http://dataservice.accuweather.com/currentconditions/v1/348585?apikey=${ACCUWEATHER_APIKEY}&details=true`)
-  .then((allWeather) => allWeather.data[0].PrecipitationSummary.Precipitation.Imperial.Value);
+const getRainfall = () => axios.get(`https://api.aerisapi.com/precip/summary/new orleans,la?&format=json&from=-3hours&filter=3hr&plimit=1&client_id=${AERIS_ID}&client_secret=${AERIS_SECRET}`)
+  .then((response) => {
+    return response.data.response[0].periods[0].summary.precip.totalIN;
+  })
+  .catch(err => {
+    console.error(err);
+  });
 
 const createAddress = (coord) => {
-  // need to take latLng coord and convert to physical address in words through API call to
-  // google geoCode.
   return axios.get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${coord}&key=${GOOGLE_APIKEY}`)
     .then((physicalAddress) => {
-      console.log('WE WANT THIS:', physicalAddress);
       return physicalAddress.data.results[0].formatted_address;
     })
     .catch((err) => {
@@ -46,15 +50,11 @@ const formatWaypoints = ((routeCoordsArray) => {
   for (let i = 0; i < routeCoordsArray.length; i += 1) {
     if (i === routeCoordsArray.length - 1) {
       string += `${parseFloat(routeCoordsArray[i][1])},${parseFloat(routeCoordsArray[i][0])}`;
-      // string.slice(0, (string.length - 1));
     } else {
       string += `${parseFloat(routeCoordsArray[i][1])},${parseFloat(routeCoordsArray[i][0])}|`;
     }
   }
   return string;
-  // routeCoordsArray.forEach(coord => {
-  //   string += parseFloat(coord[1]) + ',' + parseFloat(coord[0]) + "|"
-  // });
 });
 
 const elevationData = ((path) => new Promise((resolve, reject) => {
