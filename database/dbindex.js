@@ -95,17 +95,16 @@ const addContacts = (contacts) => new Promise((resolve, reject) => {
 });
 
 const createReport = ((reportInfo) => {
-  const values = [reportInfo.latLng, reportInfo.img, reportInfo.desc, reportInfo.physicalAddress];
-  const text = 'INSERT INTO reports(latLng, img, description, physical_address) VALUES($1, $2, $3, $4)';
+  const values = [reportInfo.latLng, reportInfo.img, reportInfo.desc, reportInfo.physicalAddress, reportInfo.id];
+  const text = 'INSERT INTO reports(latLng, img, description, physical_address, user_id) VALUES($1, $2, $3, $4, $5)';
   pool.query(text, values)
     .then((res) => res)
-    .catch((error) => 
-    console.log(error));
+    .catch((error) => console.log(error));
 });
 
 const getReports = () => new Promise((resolve, reject) => {
   // const text = 'SELECT latLng, img, description, physical_address FROM reports';
-  pool.query('SELECT latLng, img, description, physical_address FROM reports')
+  pool.query('SELECT latLng, img, description, physical_address, user_id FROM reports')
     .then((reports) => {
       resolve(reports.rows);
     })
