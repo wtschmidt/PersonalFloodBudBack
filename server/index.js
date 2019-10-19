@@ -159,58 +159,55 @@ app.post('/getMap', async (req, res) => {
   await graphHopper(start, end, blockString)
     .then(async (response) => {
       console.log(response, 'this is the return from graphhopper');
-      const waypoints = response.data.paths[0].points.coordinates;
+      let waypoints = response.data.paths[0].points.coordinates;
       let isSafe = false;
       while (!isSafe) {
         lowPoints = waypoints.filter((waypoint) => waypoint[2] < 2.5);
-        if(!lowPoints.length){
+        if (!lowPoints.length) {
           isSafe = true;
         } else if (lowPoints.length) {
           lowPoints.forEach((point) => {
             blockAreas += (`${point[1]},${point[0]},100;`);
           });
           const newBlockString = blockAreas.slice(0, blockAreas.length - 1);
-          await graphHopper(start, end, newBlockString)
+          graphHopper(start, end, newBlockString)
             .then((newpoints) => {
-              waypoints = newpoints.data.paths[0].points.coordinates
+              waypoints = newpoints.data.paths[0].points.coordinates;
             });
-          }
-
-
-
-
-
-      lowPoints = waypoints.filter((waypoint) => waypoint[2] < 2.5);
-      if (lowPoints.length) {
-        lowPoints.forEach((point) => {
-          blockAreas += (`${point[1]},${point[0]},100;`);
-        });
-        const newBlockString = blockAreas.slice(0, blockAreas.length - 1);
-        await graphHopper(start, end, newBlockString)
-          .then((newWaypoints) => {
-            mapped = newWaypoints.data.paths[0].points.coordinates.map((eachPoint) => ({
-              location: {
-                lat: eachPoint[1],
-                lng: eachPoint[0],
-              },
-            }));
-            directions.waypoints = mapped;
-            mapped.unshift({ location: { lat: req.body.mapReqInfo.origin.lat, lng: req.body.mapReqInfo.origin.lng } });
-            mapped.push({ location: { lat: req.body.mapReqInfo.destination.lat, lng: req.body.mapReqInfo.destination.lng } });
-            res.status(201).send(directions);
-          });
-      } else {
-        mapped = waypoints.map((point) => ({
-          location: {
-            lat: point[1],
-            lng: point[0],
-          },
-        }));
-        directions.waypoints = mapped;
-        mapped.unshift({ location: { lat: req.body.mapReqInfo.origin.lat, lng: req.body.mapReqInfo.origin.lng } });
-        mapped.push({ location: { lat: req.body.mapReqInfo.destination.lat, lng: req.body.mapReqInfo.destination.lng } });
-        res.status(201).send(directions);
+        }
       }
+
+
+      // lowPoints = waypoints.filter((waypoint) => waypoint[2] < 2.5);
+      // if (lowPoints.length) {
+      //   lowPoints.forEach((point) => {
+      //     blockAreas += (`${point[1]},${point[0]},100;`);
+      //   });
+      //   const newBlockString = blockAreas.slice(0, blockAreas.length - 1);
+      //   await graphHopper(start, end, newBlockString)
+      // .then((newWaypoints) => {
+      //       mapped = newWaypoints.data.paths[0].points.coordinates.map((eachPoint) => ({
+      //         location: {
+      //           lat: eachPoint[1],
+      //           lng: eachPoint[0],
+      //         },
+      //       }));
+      //       directions.waypoints = mapped;
+      //       mapped.unshift({ location: { lat: req.body.mapReqInfo.origin.lat, lng: req.body.mapReqInfo.origin.lng } });
+      //       mapped.push({ location: { lat: req.body.mapReqInfo.destination.lat, lng: req.body.mapReqInfo.destination.lng } });
+      //       res.status(201).send(directions);
+      //     });
+      // } else {
+      mapped = waypoints.map((point) => ({
+        location: {
+          lat: point[1],
+          lng: point[0],
+        },
+      }));
+      directions.waypoints = mapped;
+      mapped.unshift({ location: { lat: req.body.mapReqInfo.origin.lat, lng: req.body.mapReqInfo.origin.lng } });
+      mapped.push({ location: { lat: req.body.mapReqInfo.destination.lat, lng: req.body.mapReqInfo.destination.lng } });
+      res.status(201).send(directions);
     })
     .catch((error) => console.log(error));
 
