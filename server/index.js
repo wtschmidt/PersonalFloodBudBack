@@ -390,7 +390,7 @@ app.post('/submitMessage', async (req, res) => {
 app.get('/userInfo', ((req, res) => {
   findGoogleUser(req.query).then((user) => {
     console.log(user);
-    res.send(user);
+    res.send(user.rows[0]);
   }).catch((err) => console.error(err));
 }));
 

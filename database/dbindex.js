@@ -38,8 +38,8 @@ const findUser = (userId) => new Promise((resolve, reject) => {
 
 const findGoogleUser = (userInfo) => new Promise ((resolve, reject) => {
   pool.query(`SELECT * FROM users where googleId='${userInfo.id}'`)
-  .then((user) => resolve(user))
-  .catch((error) => console.log(error));
+    .then((user) => resolve(user))
+    .catch((error) => console.log(error));
 });
 
 const findOrInsert = (userInfo) => new Promise((resolve, reject) => {
