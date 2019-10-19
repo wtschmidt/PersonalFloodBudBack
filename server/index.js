@@ -160,6 +160,26 @@ app.post('/getMap', async (req, res) => {
     .then(async (response) => {
       console.log(response, 'this is the return from graphhopper');
       const waypoints = response.data.paths[0].points.coordinates;
+      let isSafe = false;
+      while (!isSafe) {
+        lowPoints = waypoints.filter((waypoint) => waypoint[2] < 2.5);
+        if(!lowPoints.length){
+          isSafe = true;
+        } else if (lowPoints.length) {
+          lowPoints.forEach((point) => {
+            blockAreas += (`${point[1]},${point[0]},100;`);
+          });
+          const newBlockString = blockAreas.slice(0, blockAreas.length - 1);
+          await graphHopper(start, end, newBlockString)
+            .then((newpoints) => {
+              waypoints = newpoints.data.paths[0].points.coordinates
+            });
+          }
+
+
+
+
+
       lowPoints = waypoints.filter((waypoint) => waypoint[2] < 2.5);
       if (lowPoints.length) {
         lowPoints.forEach((point) => {
@@ -431,10 +451,6 @@ app.post('/submitMessage', async (req, res) => {
   res.send(200);
 });
 
-app.get('*', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, `${DIST_INDEX}`));
-});
-
 app.get('/getUsersReports/:{id}');
 
 app.get('/reportLocation/:{latlng}', ((req, res) => {
@@ -443,6 +459,10 @@ app.get('/reportLocation/:{latlng}', ((req, res) => {
     res.send(result);
   });
 }));
+
+app.get('*', (req, res) => {
+  res.status(200).sendFile(path.join(__dirname, `${DIST_INDEX}`));
+});
 
 
 app.listen(PORT, () => {
