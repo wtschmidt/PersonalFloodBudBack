@@ -6,7 +6,7 @@ const {
   GOOGLE_APIKEY,
   CARIN_GOOGLE_APIKEY,
   AERIS_ID,
-  AERIS_SECRET
+  AERIS_SECRET,
 } = process.env;
 
 const googleMapsClient = require('@google/maps').createClient({
