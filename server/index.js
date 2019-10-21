@@ -158,11 +158,10 @@ app.post('/getMap', async (req, res) => {
   const end = `${parseFloat(req.body.mapReqInfo.destination.lat)},${parseFloat(req.body.mapReqInfo.destination.lng)}`;
   await graphHopper(start, end, blockString)
     .then(async (response) => {
-      console.log(response, 'this is the return from graphhopper');
       let waypoints = response.data.paths[0].points.coordinates;
       let isSafe = false;
       while (!isSafe) {
-        lowPoints = waypoints.filter((waypoint) => waypoint[2] < 2.5);
+        lowPoints = waypoints.filter((waypoint) => waypoint[2] < 2);
         if (!lowPoints.length) {
           isSafe = true;
         } else if (lowPoints.length) {
@@ -170,10 +169,8 @@ app.post('/getMap', async (req, res) => {
             blockAreas += (`${point[1]},${point[0]},100;`);
           });
           const newBlockString = blockAreas.slice(0, blockAreas.length - 1);
-          graphHopper(start, end, newBlockString)
-            .then((newpoints) => {
-              waypoints = newpoints.data.paths[0].points.coordinates;
-            });
+          const newpoints = await graphHopper(start, end, newBlockString);
+          waypoints = newpoints.data.paths[0].points.coordinates;
         }
       }
 
@@ -207,6 +204,9 @@ app.post('/getMap', async (req, res) => {
       directions.waypoints = mapped;
       mapped.unshift({ location: { lat: req.body.mapReqInfo.origin.lat, lng: req.body.mapReqInfo.origin.lng } });
       mapped.push({ location: { lat: req.body.mapReqInfo.destination.lat, lng: req.body.mapReqInfo.destination.lng } });
+      // let blockedArray = blockString.split(',');
+      // console.log(blockedArray);
+      // if(blockString.includes(end) || newBlockString.includes(end))
       res.status(201).send(directions);
     })
     .catch((error) => console.log(error));
