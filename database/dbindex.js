@@ -81,7 +81,9 @@ const addContacts = (contacts) => new Promise((resolve, reject) => {
     const phone = contacts[`phone${i}`];
     const name = contacts[`name${i}`];
     console.log(name, phone);
-    const text = `INSERT INTO emergencycontacts(phone_number, name, user_id) VALUES('${phone}', '${name}', '${contacts.user_id}')`;
+    const text = `UPDATE emergencycontacts SET phone_number = '${phone}', name = '${name}' WHERE user_id = '${contacts.user_id}' AND contactcount = '${i}';
+    INSERT INTO emergencycontacts (phone_number, name, user_id, contactcount) SELECT '${phone}', '${name}', '${contacts.user_id}', '${i}' WHERE NOT EXISTS (SELECT * FROM emergencycontacts WHERE user_id = '${contacts.user_id}' AND contactcount = '${i}');`;
+    // const text = `INSERT INTO emergencycontacts(phone_number, name, user_id) VALUES('${phone}', '${name}', '${contacts.user_id}')`;
     pool.query(text)
       .then((res) => {
         console.log(res);
