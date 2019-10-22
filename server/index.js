@@ -31,6 +31,7 @@ const {
   formatWaypoints,
   get311,
   elevationData,
+  graphHopper,
 } = require('./APIhelpers');
 const config = require('../config');
 
@@ -74,7 +75,7 @@ app.use(passport.session()); // Used to persist login sessions
 passport.use(new GoogleStrategy({
   clientID: config.GOOGLE_CLIENT_ID,
   clientSecret: config.GOOGLE_CLIENT_SECRET,
-  callbackURL: '/auth/google/callback',
+  callbackURL: 'http://localhost:8080/auth/google/callback',
 },
 (accessToken, refreshToken, profile, cb) => {
   findOrInsert(profile);
@@ -109,7 +110,7 @@ app.get('/auth/google', passport.authenticate('google', {
 
 // The middleware receives the data from Google and runs the function on Strategy config
 app.get('/auth/google/callback', passport.authenticate('google', {
-  failureRedirect: '/'
+  failureRedirect: '/',
 }), (req, res) => {
   res.redirect(`/?id=${req.user.rows[0].googleid}`);
 });
@@ -127,15 +128,18 @@ app.post('/getMap', async (req, res) => {
   let mapped;
   let lowPoints;
   const reports = await getReports();
+  let blockAreas = '';
 
   reports.forEach((report) => {
     if (report.latlng) {
-      const arr = report.latlng.split(',');
-      const point = turf.point([parseFloat(arr[1]), parseFloat(arr[0])]);
-      const bufferedPoint = turf.buffer(point, 0.5, {
-        units: 'miles',
-      });
-      bufferArr.push(bufferedPoint);
+      // const arr = report.latlng.split(',');
+      blockAreas += (`${report.latlng},100;`);
+
+      // const point = turf.point([parseFloat(arr[1]), parseFloat(arr[0])]);
+      // const bufferedPoint = turf.buffer(point, 0.5, {
+      //   units: 'miles',
+      // });
+      // bufferArr.push(bufferedPoint);
     }
   });
 
@@ -143,91 +147,151 @@ app.post('/getMap', async (req, res) => {
     .then((cityReports) => {
       console.log(cityReports);
       if (cityReports.length) {
-        cityReports.features.forEach((feature) => {
-          const cityPoint = turf.buffer(feature, 0.5, {
-            units: 'miles'
-          });
-          bufferArr.push(cityPoint);
-        });
-      }
-      // cityReports.forEach((cityReport) => {
-      //   const cityPoint = turf.point([cityReport.longitude, cityReport.latitude]);
-      //   const cityBufferedPoint = turf.buffer(cityPoint, 0.5, { units: 'miles' });
-      //   bufferArr.push(cityBufferedPoint);
-    });
+        cityReports.forEach((report) => blockAreas += (`${report.geocoded_column.latitude},${report.geocoded_column.longitude},100;`));
+        // cityReports.features.forEach((feature) => {
 
-  const obstacles = await turf.featureCollection(bufferArr);
+        //   const cityPoint = turf.buffer(feature, 0.5, {
+        //     units: 'miles',
+        //   });
+        //   bufferArr.push(cityPoint);
+      }
+    });
+  const blockString = blockAreas.slice(0, blockAreas.length - 1);
+  const start = `${parseFloat(req.body.mapReqInfo.origin.lat)},${parseFloat(req.body.mapReqInfo.origin.lng)}`;
+  const end = `${parseFloat(req.body.mapReqInfo.destination.lat)},${parseFloat(req.body.mapReqInfo.destination.lng)}`;
+  await graphHopper(start, end, blockString)
+    .then(async (response) => {
+      let waypoints = response.data.paths[0].points.coordinates;
+      let isSafe = false;
+      while (!isSafe) {
+        lowPoints = waypoints.filter((waypoint) => waypoint[2] < 2);
+        if (!lowPoints.length) {
+          isSafe = true;
+        } else if (lowPoints.length) {
+          lowPoints.forEach((point) => {
+            blockAreas += (`${point[1]},${point[0]},100;`);
+          });
+          const newBlockString = blockAreas.slice(0, blockAreas.length - 1);
+          const newpoints = await graphHopper(start, end, newBlockString);
+          waypoints = newpoints.data.paths[0].points.coordinates;
+        }
+      }
+
+
+      // lowPoints = waypoints.filter((waypoint) => waypoint[2] < 2.5);
+      // if (lowPoints.length) {
+      //   lowPoints.forEach((point) => {
+      //     blockAreas += (`${point[1]},${point[0]},100;`);
+      //   });
+      //   const newBlockString = blockAreas.slice(0, blockAreas.length - 1);
+      //   await graphHopper(start, end, newBlockString)
+      // .then((newWaypoints) => {
+      //       mapped = newWaypoints.data.paths[0].points.coordinates.map((eachPoint) => ({
+      //         location: {
+      //           lat: eachPoint[1],
+      //           lng: eachPoint[0],
+      //         },
+      //       }));
+      //       directions.waypoints = mapped;
+      //       mapped.unshift({ location: { lat: req.body.mapReqInfo.origin.lat, lng: req.body.mapReqInfo.origin.lng } });
+      //       mapped.push({ location: { lat: req.body.mapReqInfo.destination.lat, lng: req.body.mapReqInfo.destination.lng } });
+      //       res.status(201).send(directions);
+      //     });
+      // } else {
+      mapped = waypoints.map((point) => ({
+        location: {
+          lat: point[1],
+          lng: point[0],
+        },
+      }));
+      directions.waypoints = mapped;
+      mapped.unshift({ location: { lat: req.body.mapReqInfo.origin.lat, lng: req.body.mapReqInfo.origin.lng } });
+      mapped.push({ location: { lat: req.body.mapReqInfo.destination.lat, lng: req.body.mapReqInfo.destination.lng } });
+      // let blockedArray = blockString.split(',');
+      // console.log(blockedArray);
+      // if(blockString.includes(end) || newBlockString.includes(end))
+      res.status(201).send(directions);
+    })
+    .catch((error) => console.log(error));
+
+  // cityReports.forEach((cityReport) => {
+  //   const cityPoint = turf.point([cityReport.longitude, cityReport.latitude]);
+  //   const cityBufferedPoint = turf.buffer(cityPoint, 0.5, { units: 'miles' });
+  //   bufferArr.push(cityBufferedPoint);
+
+
+  // const obstacles = await turf.featureCollection(bufferArr);
 
   // going to need to be the origin and desination lat/lng from the http req from front end,
   // with obstacles = sections that are flood reports
-  const start = [parseFloat(req.body.mapReqInfo.origin.lng), parseFloat(req.body.mapReqInfo.origin.lat)];
-  const end = [parseFloat(req.body.mapReqInfo.destination.lng), parseFloat(req.body.mapReqInfo.destination.lat)];
-  const options = {
-    obstacles,
-  };
+  // const start = [parseFloat(req.body.mapReqInfo.origin.lng), parseFloat(req.body.mapReqInfo.origin.lat)];
+  // const end = [parseFloat(req.body.mapReqInfo.destination.lng), parseFloat(req.body.mapReqInfo.destination.lat)];
+  // const options = {
+  //   obstacles,
+  // };
 
-  const route = await turf.shortestPath(start, end, options);
+  // const route = await turf.shortestPath(start, end, options);
 
-  const routeCoordsArray = route.geometry.coordinates;
+  // const routeCoordsArray = route.geometry.coordinates;
 
-  // format coordinates from routeCoordsArray to be in appropriate form for snapToRoads API below
-  const allCoords = await formatWaypoints(routeCoordsArray);
+  // // format coordinates from routeCoordsArray to be in appropriate form for snapToRoads API below
+  // const allCoords = await formatWaypoints(routeCoordsArray);
 
   // snap the coords from allCoords to roads, using google's snapToRoads API,
   // take returned lat/lng of origin, destin from that API req and send it to google agm directions
   // send the return of that to front end to render on the client side map
 
-  await axios.get(`https://roads.googleapis.com/v1/snapToRoads?path=${allCoords}&interpolate=false&key=AIzaSyDCQchp8XgMTPdeHQG_4EJ8ytTv7bWPP3c`)
-    .then((response) => {
-      // I don't think we'll need these next two lines that set props of origin and destination in response, but leaving them for now, just in case
-      // directions.origin = { lat: response.data.snappedPoints[0].location.latitude, lng: response.data.snappedPoints[0].location.longitude };
-      // directions.destination = { lat: response.data.snappedPoints[response.data.snappedPoints.length - 1].location.latitude, lng: response.data.snappedPoints[response.data.snappedPoints.length - 1].location.longitude };
-      mapped = response.data.snappedPoints.slice(1, response.data.snappedPoints.length - 1).map((points) => ({
-        location: {
-          lat: points.location.latitude,
-          lng: points.location.longitude,
-        },
-      }));
-    });
-  const coordsForElevation = mapped.map((coord) => [coord.location.lat, coord.location.lng]);
-  await elevationData(coordsForElevation)
-    .then((results) => {
-      lowPoints = results.filter((result) => result.elevation < 0.5);
-    });
-  if (lowPoints.length) {
-    lowPoints.forEach((point) => {
-      const elevationPoint = turf.point([point.location.lng, point.location.lat]);
-      const bufferedElevationPoint = turf.buffer(elevationPoint, 0.1, {
-        units: 'miles',
-      });
-      bufferArr.push(bufferedElevationPoint);
-    });
+  // await axios.get(`https://roads.googleapis.com/v1/snapToRoads?path=${allCoords}&interpolate=false&key=AIzaSyDCQchp8XgMTPdeHQG_4EJ8ytTv7bWPP3c`)
+  //   .then((response) => {
+  //     // I don't think we'll need these next two lines that set props of origin and destination in response, but leaving them for now, just in case
+  //     // directions.origin = { lat: response.data.snappedPoints[0].location.latitude, lng: response.data.snappedPoints[0].location.longitude };
+  //     // directions.destination = { lat: response.data.snappedPoints[response.data.snappedPoints.length - 1].location.latitude, lng: response.data.snappedPoints[response.data.snappedPoints.length - 1].location.longitude };
+  //     mapped = response.data.snappedPoints.slice(1, response.data.snappedPoints.length - 1).map((points) => ({
+  //       location: {
+  //         lat: points.location.latitude,
+  //         lng: points.location.longitude,
+  //       },
+  //     }));
+  //   });
+  // const coordsForElevation = mapped.map((coord) => [coord.location.lat, coord.location.lng]);
+  // await elevationData(coordsForElevation)
+  //   .then((results) => {
+  //     lowPoints = results.filter((result) => result.elevation < 0.5);
+  //   });
+  // if (lowPoints.length) {
+  //   lowPoints.forEach((point) => {
+  //     const elevationPoint = turf.point([point.location.lng, point.location.lat]);
+  //     const bufferedElevationPoint = turf.buffer(elevationPoint, 0.1, {
+  //       units: 'miles',
+  //     });
+  //     bufferArr.push(bufferedElevationPoint);
+  //   });
 
-    const newObstacles = turf.featureCollection(bufferArr);
-    const newOptions = {
-      obstacles: newObstacles,
-    };
-    const newRoute = turf.shortestPath(start, end, newOptions);
-    const newRouteCoordsArray = newRoute.geometry.coordinates;
-    const newAllCoords = await formatWaypoints(newRouteCoordsArray);
-    await axios.get(`https://roads.googleapis.com/v1/snapToRoads?path=${newAllCoords}&interpolate=false&key=AIzaSyDCQchp8XgMTPdeHQG_4EJ8ytTv7bWPP3c`)
-      .then((response) => {
-        // I don't think we'll need these next two lines that set props of origin and destination in response, but leaving them for now, just in case
-        // directions.origin = { lat: response.data.snappedPoints[0].location.latitude, lng: response.data.snappedPoints[0].location.longitude };
-        // directions.destination = { lat: response.data.snappedPoints[response.data.snappedPoints.length - 1].location.latitude, lng: response.data.snappedPoints[response.data.snappedPoints.length - 1].location.longitude };
-        const newMapped = response.data.snappedPoints.slice(1, response.data.snappedPoints.length - 1).map((points) => ({
-          location: {
-            lat: points.location.latitude,
-            lng: points.location.longitude,
-          },
-        }));
-        directions.waypoints = newMapped;
-        res.status(201).send(directions);
-      });
-  } else {
-    directions.waypoints = mapped;
-    res.status(201).send(directions);
-  }
+  //   const newObstacles = turf.featureCollection(bufferArr);
+  //   const newOptions = {
+  //     obstacles: newObstacles,
+  //   };
+  //   const newRoute = turf.shortestPath(start, end, newOptions);
+  //   const newRouteCoordsArray = newRoute.geometry.coordinates;
+  //   const newAllCoords = await formatWaypoints(newRouteCoordsArray);
+  //   await axios.get(`https://roads.googleapis.com/v1/snapToRoads?path=${newAllCoords}&interpolate=false&key=AIzaSyDCQchp8XgMTPdeHQG_4EJ8ytTv7bWPP3c`)
+  //     .then((response) => {
+  //       // I don't think we'll need these next two lines that set props of origin and destination in response, but leaving them for now, just in case
+  //       // directions.origin = { lat: response.data.snappedPoints[0].location.latitude, lng: response.data.snappedPoints[0].location.longitude };
+  //       // directions.destination = { lat: response.data.snappedPoints[response.data.snappedPoints.length - 1].location.latitude, lng: response.data.snappedPoints[response.data.snappedPoints.length - 1].location.longitude };
+  //       const newMapped = response.data.snappedPoints.slice(1, response.data.snappedPoints.length - 1).map((points) => ({
+  //         location: {
+  //           lat: points.location.latitude,
+  //           lng: points.location.longitude,
+  //         },
+  //       }));
+  //       directions.waypoints = newMapped;
+  //       res.status(201).send(directions);
+  //     });
+  // } else {
+  //   directions.waypoints = mapped;
+  //   res.status(201).send(directions);
+  // }
 
 
   // The code below will also work, but it seems to give less accurate results.
@@ -319,7 +383,7 @@ app.get('/getContacts', async (req, res) => {
 
 app.post('/submitContacts', async (req, res) => {
   console.log(req.body.contacts);
-  const userInfo = await findGoogleUser(req.body.contacts)
+  const userInfo = await findGoogleUser(req.body.contacts);
   const contacts = {
     user_id: userInfo.rows[0].id,
     name1: req.body.contacts.name1,
@@ -388,25 +452,7 @@ app.post('/submitMessage', async (req, res) => {
   res.send(200);
 });
 
-app.get('/userInfo', ((req, res) => {
-  findGoogleUser(req.query).then((user) => {
-    console.log(user);
-    res.send(user.rows[0]);
-  }).catch((err) => console.error(err));
-}));
-
-app.get('/getUsersReports/:{id}', async (req, res) => {
-  await findGoogleUser(req.params)
-    .then((user) => {
-      getUsersReports(user.id);
-    })
-    .then((userReports) => {
-      res.setStatus(200).send(userReports);
-    })
-    .catch((err) => {
-      console.error(err);
-    });
-});
+app.get('/getUsersReports/:{id}');
 
 app.get('/reportLocation/:{latlng}', ((req, res) => {
   createAddress(req.param.latlng).then((result) => {
