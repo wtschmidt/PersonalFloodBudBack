@@ -1,3 +1,4 @@
+// const AerisWeather = require('@aerisweather/javascript-sdk');
 const express = require('express');
 const env = require('dotenv');
 const axios = require('axios');
@@ -21,6 +22,8 @@ const {
   findUser,
   findOrInsert,
   findGoogleUser,
+  getUsersReports,
+  deleteReport,
 } = require('../database/dbindex');
 const {
   getRainfall,
@@ -34,7 +37,6 @@ const config = require('../config');
 
 cloudinary.config(config);
 const PORT = process.env.PORT || 8080;
-
 
 const app = express();
 
@@ -52,6 +54,7 @@ app.use(bodyParser.urlencoded({
   limit: '10mb',
 }));
 
+// const angularStaticDir = path.join(__dirname, '../../Floods-thesis/dist/flood'); –––> Old stuff, pay no mind
 const angularStaticDir = path.join(__dirname, `${DIST}`);
 
 app.use(express.static(angularStaticDir));
@@ -323,7 +326,7 @@ app.get('/rainfall', (req, res) => getRainfall()
 
 app.post('/submitReport', async (req, res) => {
   let returnedAddress;
-
+  const userInfo = await findGoogleUser(req.body.report);
   // user is using current location
   // find the address of the user's location
   if (!req.body.report.location) {
@@ -344,6 +347,7 @@ app.post('/submitReport', async (req, res) => {
           latLng: req.body.report.latLng,
           img: imgAssets.secure_url,
           physicalAddress: returnedAddress || req.body.report.location,
+          id: userInfo.rows[0].id,
         };
       })
       .then(() => {
@@ -457,15 +461,20 @@ app.get('/reportLocation/:{latlng}', ((req, res) => {
   });
 }));
 
+app.get('/deleteReport', ((req, res) => {
+  console.log("THIS IS IT!", req.query);
+  deleteReport(req.query.id)
+    .catch((err) => console.error(err));
+}));
+
 app.get('*', (req, res) => {
+  // res.status(200).sendFile(path.join(__dirname, '../../Floods-thesis/dist/flood/index.html')); ––––> Just in case;
   res.status(200).sendFile(path.join(__dirname, `${DIST_INDEX}`));
 });
-
 
 app.listen(PORT, () => {
   console.log('Floodbuddies be listening on: 8080');
 });
-
 
 // LEAVING lines below right now, just for reference. Will delete later.
 // const slimBuffer = bufferArr.splice(0, 15);
