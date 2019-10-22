@@ -104,7 +104,7 @@ const createReport = ((reportInfo) => {
 
 const getReports = () => new Promise((resolve, reject) => {
   // const text = 'SELECT latLng, img, description, physical_address FROM reports';
-  pool.query('SELECT latLng, img, description, physical_address, user_id FROM reports')
+  pool.query('SELECT id, latLng, img, description, physical_address, user_id FROM reports')
     .then((reports) => {
       resolve(reports.rows);
     })
@@ -124,6 +124,20 @@ const getUsersReports = (userId) => new Promise((resolve, reject) => {
     });
 });
 
+const deleteReport = (reportId) => new Promise((resolve, reject) => {
+  console.log("reportId", reportId);
+  const values = [reportId];
+  const text = 'SELECT * FROM reports WHERE id=$1';
+  // pool.query(`SELECT * FROM reports WHERE id=${reportId}`)
+  pool.query(text, values)
+    .then((report) => {
+      console.log(report);
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+});
+
 module.exports = {
   insertUser,
   createReport,
@@ -134,6 +148,7 @@ module.exports = {
   findUser,
   findOrInsert,
   findGoogleUser,
+  deleteReport,
 };
 
 //to shell into our RDS, you'll need to run this command from the terminal:

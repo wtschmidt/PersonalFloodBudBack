@@ -23,6 +23,7 @@ const {
   findOrInsert,
   findGoogleUser,
   getUsersReports,
+  deleteReport,
 } = require('../database/dbindex');
 const {
   getRainfall,
@@ -62,7 +63,7 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
   cookie: {
-    secure: true
+    secure: true,
   },
 }));
 
@@ -73,7 +74,7 @@ app.use(passport.session()); // Used to persist login sessions
 passport.use(new GoogleStrategy({
   clientID: config.GOOGLE_CLIENT_ID,
   clientSecret: config.GOOGLE_CLIENT_SECRET,
-  callbackURL: 'http://localhost:8080/auth/google/callback',
+  callbackURL: '/auth/google/callback',
 },
 (accessToken, refreshToken, profile, cb) => {
   findOrInsert(profile);
@@ -412,6 +413,12 @@ app.get('/reportLocation/:{latlng}', ((req, res) => {
     console.log(result);
     res.send(result);
   });
+}));
+
+app.get('/deleteReport', ((req, res) => {
+  console.log("THIS IS IT!", req.query);
+  deleteReport(req.query.id)
+    .catch((err) => console.error(err));
 }));
 
 app.get('*', (req, res) => {
