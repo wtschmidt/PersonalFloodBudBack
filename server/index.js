@@ -347,7 +347,7 @@ app.post('/submitReport', async (req, res) => {
           latLng: req.body.report.latLng,
           img: imgAssets.secure_url,
           physicalAddress: returnedAddress || req.body.report.location,
-          id: userInfo.rows[0].id,
+          id: userInfo.id,
         };
       })
       .then(() => {
@@ -363,6 +363,7 @@ app.post('/submitReport', async (req, res) => {
       latLng: req.body.report.latLng,
       img: null,
       physicalAddress: returnedAddress || req.body.report.location,
+      id: userInfo.id,
     };
     await createReport(reportData);
     res.status(201).send('got ya report...Allen');
@@ -452,7 +453,9 @@ app.post('/submitMessage', async (req, res) => {
   res.send(200);
 });
 
-app.get('/getUsersReports/:{id}');
+app.get('/userInfo', ((req, res) => {
+  findGoogleUser(req.query).then((user) => res.send(user)).catch((err) => res.send(err));
+}));
 
 app.get('/reportLocation/:{latlng}', ((req, res) => {
   createAddress(req.param.latlng).then((result) => {

@@ -38,8 +38,11 @@ const findUser = (userId) => new Promise((resolve, reject) => {
 
 const findGoogleUser = (userInfo) => new Promise ((resolve, reject) => {
   pool.query(`SELECT * FROM users where googleId='${userInfo.id}'`)
-    .then((user) => resolve(user))
-    .catch((error) => console.log(error));
+    .then((user) => {
+      console.log("THIS IS THE SUER!", user.rows[0]);
+      resolve(user.rows[0]);
+    })
+    .catch((error) => reject(error));
 });
 
 const findOrInsert = (userInfo) => new Promise((resolve, reject) => {
@@ -129,14 +132,16 @@ const getUsersReports = (userId) => new Promise((resolve, reject) => {
 const deleteReport = (reportId) => new Promise((resolve, reject) => {
   console.log("reportId", reportId);
   const values = [reportId];
-  const text = 'SELECT * FROM reports WHERE id=$1';
+  const text = 'DELETE FROM reports WHERE id=$1';
   // pool.query(`SELECT * FROM reports WHERE id=${reportId}`)
   pool.query(text, values)
     .then((report) => {
-      console.log(report);
+      console.log("THIS SHOULD BE NUTIN", report);
+      resolve("DELETED");
     })
     .catch((err) => {
       console.error(err);
+      reject(err);
     });
 });
 
