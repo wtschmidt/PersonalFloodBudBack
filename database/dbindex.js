@@ -102,7 +102,9 @@ const addContacts = (contacts) => new Promise((resolve, reject) => {
 const createReport = ((reportInfo) => {
   const values = [reportInfo.latLng, reportInfo.img, reportInfo.desc, reportInfo.physicalAddress, reportInfo.id];
   const text = 'INSERT INTO reports(latLng, img, description, physical_address, user_id) VALUES($1, $2, $3, $4, $5)';
+  const text2 = 'INSERT INTO allReports(latLng, img, description, physical_address, user_id) VALUES($1, $2, $3, $4, $5)';
   pool.query(text, values)
+    .then(() => pool.query(text2, values))
     .then((res) => res)
     .catch((error) => console.log(error));
 });
