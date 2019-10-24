@@ -465,8 +465,8 @@ app.get('/reportLocation/:{latlng}', ((req, res) => {
 }));
 
 app.get('/deleteReport', ((req, res) => {
-  console.log("THIS IS IT!", req.query);
   deleteReport(req.query.id)
+    .then(() => res.send('DELETED'))
     .catch((err) => console.error(err));
 }));
 
